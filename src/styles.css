@@ -90,10 +90,19 @@
 @layer base {
   * { border-color: var(--color-border); }
   body {
-    background-color: var(--color-background);
+    background: linear-gradient(160deg, oklch(0.95 0.04 175) 0%, oklch(0.97 0.02 200) 50%, oklch(0.94 0.05 170) 100%);
+    background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-sans);
   }
+}
+
+@utility glass {
+  background: linear-gradient(145deg, color-mix(in oklab, var(--color-primary) 18%, white) 0%, color-mix(in oklab, var(--color-primary) 6%, white) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid color-mix(in oklab, white 60%, var(--color-primary) 20%);
+  box-shadow: 0 4px 20px -6px color-mix(in oklab, var(--color-primary) 25%, transparent), inset 0 1px 0 rgba(255,255,255,0.6);
 }
 
 @utility marquee {
@@ -103,3 +112,4 @@
   0% { transform: translateX(100%); }
   100% { transform: translateX(-100%); }
 }
+
