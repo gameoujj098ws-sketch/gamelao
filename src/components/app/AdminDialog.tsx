@@ -18,33 +18,28 @@ type Product = {
   service_field_label: string | null; category_id: string | null; hidden_from_home: boolean;
 };
 
-export function AdminDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+export function AdminPanel() {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>ລະບົບຈັດການແອັດມິນ</DialogTitle></DialogHeader>
-        <Tabs defaultValue="stats" className="w-full">
-          <TabsList className="grid grid-cols-4 lg:grid-cols-8 w-full h-auto">
-            <TabsTrigger value="stats">ສະຖິຕິ</TabsTrigger>
-            <TabsTrigger value="topups">ອະນຸມັດເງີນ</TabsTrigger>
-            <TabsTrigger value="orders">ອໍເດີ</TabsTrigger>
-            <TabsTrigger value="services">ບໍລິການ</TabsTrigger>
-            <TabsTrigger value="categories">ໝວດ</TabsTrigger>
-            <TabsTrigger value="products">ສິນຄ້າ</TabsTrigger>
-            <TabsTrigger value="users">ຜູ້ໃຊ້</TabsTrigger>
-            <TabsTrigger value="settings">ຕັ້ງຄ່າ</TabsTrigger>
-          </TabsList>
-          <TabsContent value="stats"><AdminStats /></TabsContent>
-          <TabsContent value="topups"><AdminTopups /></TabsContent>
-          <TabsContent value="orders"><AdminOrders /></TabsContent>
-          <TabsContent value="services"><AdminServices /></TabsContent>
-          <TabsContent value="categories"><AdminCategories /></TabsContent>
-          <TabsContent value="products"><AdminProducts /></TabsContent>
-          <TabsContent value="users"><AdminUsers /></TabsContent>
-          <TabsContent value="settings"><AdminSettings /></TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+    <Tabs defaultValue="stats" className="w-full">
+      <TabsList className="grid grid-cols-4 lg:grid-cols-8 w-full h-auto">
+        <TabsTrigger value="stats">ສະຖິຕິ</TabsTrigger>
+        <TabsTrigger value="topups">ອະນຸມັດເງີນ</TabsTrigger>
+        <TabsTrigger value="orders">ອໍເດີ</TabsTrigger>
+        <TabsTrigger value="services">ບໍລິການ</TabsTrigger>
+        <TabsTrigger value="categories">ໝວດ</TabsTrigger>
+        <TabsTrigger value="products">ສິນຄ້າ</TabsTrigger>
+        <TabsTrigger value="users">ຜູ້ໃຊ້</TabsTrigger>
+        <TabsTrigger value="settings">ຕັ້ງຄ່າ</TabsTrigger>
+      </TabsList>
+      <TabsContent value="stats"><AdminStats /></TabsContent>
+      <TabsContent value="topups"><AdminTopups /></TabsContent>
+      <TabsContent value="orders"><AdminOrders /></TabsContent>
+      <TabsContent value="services"><AdminServices /></TabsContent>
+      <TabsContent value="categories"><AdminCategories /></TabsContent>
+      <TabsContent value="products"><AdminProducts /></TabsContent>
+      <TabsContent value="users"><AdminUsers /></TabsContent>
+      <TabsContent value="settings"><AdminSettings /></TabsContent>
+    </Tabs>
   );
 }
 

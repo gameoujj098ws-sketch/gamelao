@@ -16,29 +16,29 @@ export function Header({
 }) {
   const [open, setOpen] = useState(false);
   const item = (icon: React.ReactNode, label: string, onClick: () => void, danger = false, badge = 0) => (
-    <button onClick={() => { setOpen(false); onClick(); }} className={`w-full flex items-center gap-3 p-3 rounded-lg hover:bg-accent text-left ${danger ? "text-destructive" : ""}`}>
+    <button onClick={() => { setOpen(false); onClick(); }} className={`w-full flex items-center gap-3 p-3 rounded-xl hover:bg-accent text-left ${danger ? "text-destructive" : ""}`}>
       {icon}<span className="flex-1">{label}</span>
       {badge > 0 && <span className="bg-destructive text-destructive-foreground text-xs rounded-full min-w-5 h-5 px-1 flex items-center justify-center">{badge}</span>}
     </button>
   );
 
   return (
-    <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b h-14 px-3 flex items-center gap-2">
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        {logoUrl ? <img src={logoUrl} alt="" className="h-8 w-8 rounded object-cover" /> : <div className="h-8 w-8 rounded bg-primary" />}
-        <div className="font-bold truncate">{siteName}</div>
+    <header className="fixed top-3 inset-x-3 z-40 glass rounded-3xl h-14 px-3 flex items-center gap-2 shadow-lg">
+      <div className="flex items-center gap-2 min-w-0 shrink-0">
+        {logoUrl ? <img src={logoUrl} alt="" className="h-10 w-10 rounded-xl object-cover" /> : <div className="h-10 w-10 rounded-xl bg-primary" />}
       </div>
+      <div className="font-bold truncate flex-1 text-sm">{siteName}</div>
       {profile ? (
-        <div className="flex items-center gap-1 bg-accent rounded-full px-3 py-1.5 text-sm font-semibold">
+        <div className="flex items-center gap-1.5 bg-white/70 dark:bg-white/10 rounded-2xl px-3 py-1.5 text-sm font-bold shadow-inner">
           <Wallet className="h-4 w-4 text-primary" />
-          {formatKip(profile.wallet_balance)}
+          <span>{formatKip(profile.wallet_balance)}</span>
         </div>
       ) : (
-        <Button size="sm" variant="secondary" onClick={onLogin}>ເຂົ້າສູ່ລະບົບ</Button>
+        <Button size="sm" variant="secondary" className="rounded-2xl" onClick={onLogin}>ເຂົ້າສູ່ລະບົບ</Button>
       )}
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button size="icon" variant="ghost" className="relative">
+          <Button size="icon" variant="ghost" className="relative rounded-2xl bg-white/50 dark:bg-white/10">
             <Menu className="h-5 w-5" />
             {unreadMsgs > 0 && <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />}
           </Button>
@@ -47,7 +47,7 @@ export function Header({
           <SheetHeader><SheetTitle>ເມນູ</SheetTitle></SheetHeader>
           {profile ? (
             <div className="mt-3 space-y-1">
-              <div className="p-3 rounded-lg bg-accent">
+              <div className="p-3 rounded-2xl bg-accent">
                 <div className="font-semibold">{profile.username}</div>
                 <div className="text-xs text-muted-foreground">{profile.email}</div>
                 <div className="mt-1 text-sm">{formatKip(profile.wallet_balance)}</div>
@@ -62,7 +62,7 @@ export function Header({
             </div>
           ) : (
             <div className="mt-3 space-y-1">
-              <Button className="w-full" onClick={() => { setOpen(false); onLogin(); }}>ເຂົ້າສູ່ລະບົບ / ສະໝັກ</Button>
+              <Button className="w-full rounded-2xl" onClick={() => { setOpen(false); onLogin(); }}>ເຂົ້າສູ່ລະບົບ / ສະໝັກ</Button>
               {helpLink && item(<HelpCircle className="h-4 w-4" />, "ຊ່ວຍເຫຼືອ", () => window.open(helpLink, "_blank"))}
             </div>
           )}
@@ -74,7 +74,7 @@ export function Header({
 
 export function BottomNav({ onTopup, onProducts, onHistory, onHelp }: { onTopup: () => void; onProducts: () => void; onHistory: () => void; onHelp: () => void }) {
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 bg-card/95 backdrop-blur border-t h-16 grid grid-cols-5 items-center px-2">
+    <nav className="fixed bottom-3 inset-x-3 z-40 glass rounded-3xl h-16 grid grid-cols-5 items-center px-2 shadow-lg">
       <NavBtn icon={<Wallet2 className="h-5 w-5" />} label="ເຕີມເງີນ" onClick={onTopup} />
       <NavBtn icon={<ShoppingBag className="h-5 w-5" />} label="ສິນຄ້າ" onClick={onProducts} />
       <NavBtn icon={<Home className="h-6 w-6" />} label="ໜ້າຫຼັກ" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} primary />
@@ -85,9 +85,9 @@ export function BottomNav({ onTopup, onProducts, onHistory, onHelp }: { onTopup:
 }
 function NavBtn({ icon, label, onClick, primary = false }: { icon: React.ReactNode; label: string; onClick: () => void; primary?: boolean }) {
   return (
-    <button onClick={onClick} className={`flex flex-col items-center gap-0.5 text-xs ${primary ? "text-primary font-bold" : "text-muted-foreground"}`}>
-      <div className={primary ? "bg-primary text-primary-foreground rounded-full p-2 -mt-6 shadow-lg" : ""}>{icon}</div>
-      <span>{label}</span>
+    <button onClick={onClick} className={`flex flex-col items-center gap-0.5 text-xs ${primary ? "text-primary-foreground font-bold" : "text-muted-foreground"}`}>
+      <div className={primary ? "bg-primary text-primary-foreground rounded-full p-3 -mt-8 shadow-xl ring-4 ring-background" : ""}>{icon}</div>
+      <span className={primary ? "text-primary font-semibold" : ""}>{label}</span>
     </button>
   );
 }
