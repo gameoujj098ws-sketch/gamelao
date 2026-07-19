@@ -84,6 +84,25 @@ export function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange
               <Input type="password" value={login.password} onChange={(e) => setLogin({ ...login, password: e.target.value })} />
             </div>
             <Button className="w-full" disabled={loading} onClick={doLogin}>ເຂົ້າສູ່ລະບົບ</Button>
+            <button
+              type="button"
+              className="text-xs text-primary underline w-full text-center"
+              onClick={async () => {
+                const id = login.id.trim();
+                if (!id) return statusDialog.error("ລົ້ມເຫຼວ", "ກະລຸນາໃສ່ອີເມວກ່ອນ");
+                let email = id;
+                if (!email.includes("@")) {
+                  const { data } = await supabase.from("profiles").select("email").eq("username", email).maybeSingle();
+                  if (!data) return statusDialog.error("ລົ້ມເຫຼວ", "ບໍ່ພົບບັນຊີ");
+                  email = data.email;
+                }
+                const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+                if (error) statusDialog.error("ລົ້ມເຫຼວ", error.message);
+                else statusDialog.success("ສຳເລັດ", "ສົ່ງລິ້ງຣີເຊັດລະຫັດໄປທີ່ອີເມວແລ້ວ");
+              }}
+            >
+              ລືມລະຫັດຜ່ານ?
+            </button>
           </TabsContent>
           <TabsContent value="register" className="space-y-3 pt-3">
             <div>
