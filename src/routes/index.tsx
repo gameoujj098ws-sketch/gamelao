@@ -106,15 +106,32 @@ function Index() {
           {cats.length === 0 ? (
             <div className="text-sm text-muted-foreground glass rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມໝວດ</div>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => setActiveCat(null)} className={`glass rounded-2xl p-2 flex gap-2 items-center ${!activeCat ? "ring-2 ring-primary" : ""}`}>
-                <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center">🏠</div>
-                <div className="text-sm font-medium">ທັງໝົດ</div>
-              </button>
+            <div className="space-y-3">
               {cats.map((c) => (
-                <button key={c.id} onClick={() => setActiveCat(c.id)} className={`glass rounded-2xl p-2 flex gap-2 items-center ${activeCat === c.id ? "ring-2 ring-primary" : ""}`}>
-                  {c.image_url ? <img src={c.image_url} className="w-14 h-14 rounded-xl object-cover" alt="" /> : <div className="w-14 h-14 rounded-xl bg-accent" />}
-                  <div className="text-sm font-medium text-left flex-1 truncate">{c.name}</div>
+                <button
+                  key={c.id}
+                  onClick={() => setActiveCat(activeCat === c.id ? null : c.id)}
+                  className={`w-full glass rounded-3xl overflow-hidden text-left block ${activeCat === c.id ? "ring-2 ring-primary" : ""}`}
+                >
+                  <div className="relative aspect-[16/6] bg-muted">
+                    {c.image_url ? (
+                      <img src={c.image_url} alt={c.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-3xl">🎮</div>
+                    )}
+                    <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-3 py-1 rounded-full font-medium">
+                      {c.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 p-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold truncate">{c.name}</div>
+                      <div className="text-xs text-muted-foreground truncate">ຂອງ{c.name}</div>
+                    </div>
+                    <div className="h-11 w-11 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
+                      <ShoppingBag className="h-5 w-5 text-primary" />
+                    </div>
+                  </div>
                 </button>
               ))}
             </div>
