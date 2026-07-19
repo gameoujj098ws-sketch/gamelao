@@ -10,7 +10,7 @@ import { HistoryDialog, MessagesDialog, ProfileDialog } from "@/components/app/U
 import { ProductDialog, type Product } from "@/components/app/ProductDialog";
 import { AdPopup } from "@/components/app/AdPopup";
 import { StatusDialog, statusDialog } from "@/components/app/StatusDialog";
-import { Megaphone, Trophy, ShoppingCart, Package } from "lucide-react";
+import { Megaphone, Trophy, ShoppingCart, Package, Users, TrendingUp, CheckCircle2, ShoppingBag, Bell } from "lucide-react";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -106,15 +106,32 @@ function Index() {
           {cats.length === 0 ? (
             <div className="text-sm text-muted-foreground glass rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມໝວດ</div>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => setActiveCat(null)} className={`glass rounded-2xl p-2 flex gap-2 items-center ${!activeCat ? "ring-2 ring-primary" : ""}`}>
-                <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center">🏠</div>
-                <div className="text-sm font-medium">ທັງໝົດ</div>
-              </button>
+            <div className="space-y-3">
               {cats.map((c) => (
-                <button key={c.id} onClick={() => setActiveCat(c.id)} className={`glass rounded-2xl p-2 flex gap-2 items-center ${activeCat === c.id ? "ring-2 ring-primary" : ""}`}>
-                  {c.image_url ? <img src={c.image_url} className="w-14 h-14 rounded-xl object-cover" alt="" /> : <div className="w-14 h-14 rounded-xl bg-accent" />}
-                  <div className="text-sm font-medium text-left flex-1 truncate">{c.name}</div>
+                <button
+                  key={c.id}
+                  onClick={() => setActiveCat(activeCat === c.id ? null : c.id)}
+                  className={`w-full glass rounded-3xl overflow-hidden text-left block ${activeCat === c.id ? "ring-2 ring-primary" : ""}`}
+                >
+                  <div className="relative aspect-[16/6] bg-muted">
+                    {c.image_url ? (
+                      <img src={c.image_url} alt={c.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-3xl">🎮</div>
+                    )}
+                    <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-3 py-1 rounded-full font-medium">
+                      {c.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 p-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold truncate">{c.name}</div>
+                      <div className="text-xs text-muted-foreground truncate">ຂອງ{c.name}</div>
+                    </div>
+                    <div className="h-11 w-11 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
+                      <ShoppingBag className="h-5 w-5 text-primary" />
+                    </div>
+                  </div>
                 </button>
               ))}
             </div>
@@ -148,11 +165,11 @@ function Index() {
 
         <section>
           <h2 className="font-bold mb-2">ສະຖິຕິ</h2>
-          <div className="grid grid-cols-2 gap-2">
-            <StatBox label="ສະມາຊິກທັງໝົດ" value={stats.members} />
-            <StatBox label="ຜູ້ຊົມເວັບ" value={stats.visits} />
-            <StatBox label="ສິນຄ້າພ້ອມຂາຍ" value={stats.available} />
-            <StatBox label="ຂາຍໄປແລ້ວ" value={stats.sold} />
+          <div className="grid grid-cols-2 gap-3">
+            <StatBox laoLabel="ຜູ້ໃຊ້ທັງໝົດ" enLabel="User all in shop" value={stats.members} icon={<Users />} />
+            <StatBox laoLabel="ຍອດເຂົ້າຊົມເວັບໄຊ" enLabel="Visits to our store" value={stats.visits} icon={<TrendingUp />} />
+            <StatBox laoLabel="ພ້ອມຈຳໜ່າຍ" enLabel="Ready for sale" value={stats.available} icon={<CheckCircle2 />} />
+            <StatBox laoLabel="ຍອດຂາຍສິນຄ້າ" enLabel="Product already sold" value={stats.sold} icon={<ShoppingCart />} />
           </div>
         </section>
 
@@ -196,6 +213,7 @@ function Index() {
 
 function ProductCard({ p, stock, onClick }: { p: Product; stock: number; onClick: () => void }) {
   const available = p.is_service || stock > 0;
+  const isService = p.is_service;
   return (
     <div className="glass rounded-3xl overflow-hidden flex flex-col">
       <div className="aspect-square bg-muted/50 m-2 rounded-2xl overflow-hidden">
@@ -214,17 +232,24 @@ function ProductCard({ p, stock, onClick }: { p: Product; stock: number; onClick
           disabled={!available}
           className="w-full bg-gradient-to-b from-primary/80 to-primary text-primary-foreground rounded-2xl py-2 flex items-center justify-center gap-1.5 font-bold text-sm shadow-md active:scale-[.98] disabled:opacity-50 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
         >
-          <ShoppingCart className="h-4 w-4" />ຊື້ສິນຄ້າ
+          {isService ? <Bell className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
+          {isService ? "ສັ່ງຈຳເນີ" : "ຊື້ສິນຄ້າ"}
         </button>
         <div className="flex items-center justify-between text-xs pt-0.5">
-          <span className="flex items-center gap-1 text-primary font-medium">
-            <span className={`h-2 w-2 rounded-full ${available ? "bg-green-500" : "bg-red-500"}`} />
-            {available ? "ພ້ອມຂາຍ" : "ໝົດ"}
-          </span>
-          {!p.is_service && (
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <Package className="h-3 w-3" />ເຫຼືອ {stock} ອັນ
+          {isService ? (
+            <span className="flex items-center gap-1 text-primary font-medium">
+              <Bell className="h-3 w-3" />ສິນຄ້າບໍລິການ
             </span>
+          ) : (
+            <>
+              <span className="flex items-center gap-1 text-primary font-medium">
+                <span className={`h-2 w-2 rounded-full ${available ? "bg-green-500" : "bg-red-500"}`} />
+                {available ? "ພ້ອມຂາຍ" : "ໝົດ"}
+              </span>
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <Package className="h-3 w-3" />ເຫຼືອ {stock} ອັນ
+              </span>
+            </>
           )}
         </div>
       </div>
@@ -232,11 +257,15 @@ function ProductCard({ p, stock, onClick }: { p: Product; stock: number; onClick
   );
 }
 
-function StatBox({ label, value }: { label: string; value: number }) {
+function StatBox({ laoLabel, enLabel, value, icon }: { laoLabel: string; enLabel: string; value: number; icon: React.ReactNode }) {
   return (
-    <div className="glass rounded-2xl p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-lg font-bold">{value.toLocaleString()}</div>
+    <div className="relative glass rounded-3xl p-4 overflow-hidden">
+      <div className="absolute -right-2 -bottom-2 text-primary/10 [&>svg]:h-24 [&>svg]:w-24">{icon}</div>
+      <div className="relative">
+        <div className="text-sm font-bold text-foreground/80 mb-1">{laoLabel}</div>
+        <div className="text-4xl font-extrabold text-primary leading-none mb-1">{value.toLocaleString()}</div>
+        <div className="text-xs text-muted-foreground">{enLabel}</div>
+      </div>
     </div>
   );
 }
