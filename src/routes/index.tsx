@@ -213,6 +213,7 @@ function Index() {
 
 function ProductCard({ p, stock, onClick }: { p: Product; stock: number; onClick: () => void }) {
   const available = p.is_service || stock > 0;
+  const isService = p.is_service;
   return (
     <div className="glass rounded-3xl overflow-hidden flex flex-col">
       <div className="aspect-square bg-muted/50 m-2 rounded-2xl overflow-hidden">
@@ -231,17 +232,24 @@ function ProductCard({ p, stock, onClick }: { p: Product; stock: number; onClick
           disabled={!available}
           className="w-full bg-gradient-to-b from-primary/80 to-primary text-primary-foreground rounded-2xl py-2 flex items-center justify-center gap-1.5 font-bold text-sm shadow-md active:scale-[.98] disabled:opacity-50 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
         >
-          <ShoppingCart className="h-4 w-4" />ຊື້ສິນຄ້າ
+          {isService ? <Bell className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
+          {isService ? "ສັ່ງຈຳເນີ" : "ຊື້ສິນຄ້າ"}
         </button>
         <div className="flex items-center justify-between text-xs pt-0.5">
-          <span className="flex items-center gap-1 text-primary font-medium">
-            <span className={`h-2 w-2 rounded-full ${available ? "bg-green-500" : "bg-red-500"}`} />
-            {available ? "ພ້ອມຂາຍ" : "ໝົດ"}
-          </span>
-          {!p.is_service && (
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <Package className="h-3 w-3" />ເຫຼືອ {stock} ອັນ
+          {isService ? (
+            <span className="flex items-center gap-1 text-primary font-medium">
+              <Bell className="h-3 w-3" />ສິນຄ້າບໍລິການ
             </span>
+          ) : (
+            <>
+              <span className="flex items-center gap-1 text-primary font-medium">
+                <span className={`h-2 w-2 rounded-full ${available ? "bg-green-500" : "bg-red-500"}`} />
+                {available ? "ພ້ອມຂາຍ" : "ໝົດ"}
+              </span>
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <Package className="h-3 w-3" />ເຫຼືອ {stock} ອັນ
+              </span>
+            </>
           )}
         </div>
       </div>
@@ -249,11 +257,15 @@ function ProductCard({ p, stock, onClick }: { p: Product; stock: number; onClick
   );
 }
 
-function StatBox({ label, value }: { label: string; value: number }) {
+function StatBox({ laoLabel, enLabel, value, icon }: { laoLabel: string; enLabel: string; value: number; icon: React.ReactNode }) {
   return (
-    <div className="glass rounded-2xl p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-lg font-bold">{value.toLocaleString()}</div>
+    <div className="relative glass rounded-3xl p-4 overflow-hidden">
+      <div className="absolute -right-2 -bottom-2 text-primary/10 [&>svg]:h-24 [&>svg]:w-24">{icon}</div>
+      <div className="relative">
+        <div className="text-sm font-bold text-foreground/80 mb-1">{laoLabel}</div>
+        <div className="text-4xl font-extrabold text-primary leading-none mb-1">{value.toLocaleString()}</div>
+        <div className="text-xs text-muted-foreground">{enLabel}</div>
+      </div>
     </div>
   );
 }
