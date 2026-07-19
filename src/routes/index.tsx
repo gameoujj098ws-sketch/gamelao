@@ -165,11 +165,11 @@ function Index() {
 
         <section>
           <h2 className="font-bold mb-2">ສະຖິຕິ</h2>
-          <div className="grid grid-cols-2 gap-2">
-            <StatBox label="ສະມາຊິກທັງໝົດ" value={stats.members} />
-            <StatBox label="ຜູ້ຊົມເວັບ" value={stats.visits} />
-            <StatBox label="ສິນຄ້າພ້ອມຂາຍ" value={stats.available} />
-            <StatBox label="ຂາຍໄປແລ້ວ" value={stats.sold} />
+          <div className="grid grid-cols-2 gap-3">
+            <StatBox laoLabel="ຜູ້ໃຊ້ທັງໝົດ" enLabel="User all in shop" value={stats.members} icon={<Users />} />
+            <StatBox laoLabel="ຍອດເຂົ້າຊົມເວັບໄຊ" enLabel="Visits to our store" value={stats.visits} icon={<TrendingUp />} />
+            <StatBox laoLabel="ພ້ອມຈຳໜ່າຍ" enLabel="Ready for sale" value={stats.available} icon={<CheckCircle2 />} />
+            <StatBox laoLabel="ຍອດຂາຍສິນຄ້າ" enLabel="Product already sold" value={stats.sold} icon={<ShoppingCart />} />
           </div>
         </section>
 
