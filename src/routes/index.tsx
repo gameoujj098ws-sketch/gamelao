@@ -10,7 +10,7 @@ import { HistoryDialog, MessagesDialog, ProfileDialog } from "@/components/app/U
 import { ProductDialog, type Product } from "@/components/app/ProductDialog";
 import { AdPopup } from "@/components/app/AdPopup";
 import { StatusDialog, statusDialog } from "@/components/app/StatusDialog";
-import { Megaphone, Trophy, ShoppingCart, Package } from "lucide-react";
+import { Megaphone, Trophy, ShoppingCart, Package, Users, TrendingUp, CheckCircle2, ShoppingBag, Bell } from "lucide-react";
 
 export const Route = createFileRoute("/")({ component: Index });
 
