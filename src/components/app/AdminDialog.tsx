@@ -21,9 +21,10 @@ type Product = {
 export function AdminPanel() {
   return (
     <Tabs defaultValue="stats" className="w-full">
-      <TabsList className="grid grid-cols-4 lg:grid-cols-8 w-full h-auto">
+      <TabsList className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 w-full h-auto">
         <TabsTrigger value="stats">ສະຖິຕິ</TabsTrigger>
-        <TabsTrigger value="topups">ອະນຸມັດເງີນ</TabsTrigger>
+        <TabsTrigger value="topups">ເງີນQR</TabsTrigger>
+        <TabsTrigger value="cards">ບັດ</TabsTrigger>
         <TabsTrigger value="orders">ອໍເດີ</TabsTrigger>
         <TabsTrigger value="services">ບໍລິການ</TabsTrigger>
         <TabsTrigger value="categories">ໝວດ</TabsTrigger>
@@ -33,6 +34,7 @@ export function AdminPanel() {
       </TabsList>
       <TabsContent value="stats"><AdminStats /></TabsContent>
       <TabsContent value="topups"><AdminTopups /></TabsContent>
+      <TabsContent value="cards"><AdminCards /></TabsContent>
       <TabsContent value="orders"><AdminOrders /></TabsContent>
       <TabsContent value="services"><AdminServices /></TabsContent>
       <TabsContent value="categories"><AdminCategories /></TabsContent>
@@ -40,6 +42,37 @@ export function AdminPanel() {
       <TabsContent value="users"><AdminUsers /></TabsContent>
       <TabsContent value="settings"><AdminSettings /></TabsContent>
     </Tabs>
+  );
+}
+
+function AdminCards() {
+  const [rows, setRows] = useState<{ id: string; card_code: string; net_amount: number; status: string; created_at: string; profiles: { username: string; email: string } | null }[]>([]);
+  const load = async () => {
+    const { data } = await supabase.from("card_topups").select("*, profiles(username,email)").eq("status", "pending").order("created_at");
+    setRows(data as never ?? []);
+  };
+  useEffect(() => { load(); }, []);
+  const act = async (id: string, ok: boolean) => {
+    const { error } = await supabase.rpc(ok ? "approve_card_topup" : "reject_card_topup", { _id: id });
+    if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
+    statusDialog.success("ສຳເລັດ", ok ? "ອະນຸມັດແລ້ວ (+6,000₭)" : "ປະຕິເສດແລ້ວ");
+    load();
+  };
+  return (
+    <div className="space-y-2 py-3">
+      {rows.length === 0 && <div className="text-center text-sm text-muted-foreground py-6">ບໍ່ມີບັດລໍຖ້າ</div>}
+      {rows.map((r) => (
+        <div key={r.id} className="border rounded-lg p-3 text-sm">
+          <div className="font-semibold">{r.profiles?.username} <span className="text-xs text-muted-foreground">({r.profiles?.email})</span></div>
+          <div className="font-mono text-xs bg-muted p-2 rounded mt-1 cursor-pointer" onClick={() => { navigator.clipboard.writeText(r.card_code); statusDialog.success("ຄັດລອກແລ້ວ", ""); }}>{r.card_code}</div>
+          <div className="text-xs text-muted-foreground mt-1">{new Date(r.created_at).toLocaleString()} · ຮັບຈິງ {formatKip(r.net_amount)}</div>
+          <div className="flex gap-2 mt-2">
+            <Button size="sm" onClick={() => act(r.id, true)}><Check className="h-4 w-4" />ອະນຸມັດ</Button>
+            <Button size="sm" variant="destructive" onClick={() => act(r.id, false)}><X className="h-4 w-4" />ປະຕິເສດ</Button>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
