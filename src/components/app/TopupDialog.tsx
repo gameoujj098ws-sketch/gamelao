@@ -78,6 +78,22 @@ export function TopupDialog({
     }
   };
 
+  const [card, setCard] = useState("");
+  const submitCard = async () => {
+    if (!/^\d{14}$/.test(card.trim())) return statusDialog.error("ລົ້ມເຫຼວ", "ບັດຕ້ອງເປັນຕົວເລກ 14 ຫຼັກ");
+    setLoading(true);
+    try {
+      const { error } = await supabase.rpc("submit_card_topup", { _card: card.trim() });
+      if (error) throw error;
+      onOpenChange(false);
+      setCard("");
+      statusDialog.success("ສຳເລັດ", "ສົ່ງບັດໃຫ້ແອັດມິນແລ້ວ (ຮັບ 6,000₭ ຫຼັງອະນຸມັດ)");
+      onDone();
+    } catch (e) {
+      statusDialog.error("ລົ້ມເຫຼວ", (e as Error).message);
+    } finally { setLoading(false); }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
