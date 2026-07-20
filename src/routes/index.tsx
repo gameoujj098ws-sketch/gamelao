@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
 import { formatKip } from "@/lib/format";
 import { Header, BottomNav } from "@/components/app/Layout";
-import { AuthDialog } from "@/components/app/AuthDialog";
+
 import { TopupDialog } from "@/components/app/TopupDialog";
 import { HistoryDialog, MessagesDialog, ProfileDialog } from "@/components/app/UserDialogs";
 import { ProductDialog, type Product } from "@/components/app/ProductDialog";
