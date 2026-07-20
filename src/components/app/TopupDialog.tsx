@@ -174,6 +174,7 @@ export function TopupDialog({
             </div>
             <Button className="w-full" disabled={loading || card.length !== 14} onClick={submitCard}>ສົ່ງບັດ</Button>
           </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
