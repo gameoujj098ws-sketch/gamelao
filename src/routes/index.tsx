@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
 import { formatKip } from "@/lib/format";
 import { Header, BottomNav } from "@/components/app/Layout";
-import { AuthDialog } from "@/components/app/AuthDialog";
+
 import { TopupDialog } from "@/components/app/TopupDialog";
 import { HistoryDialog, MessagesDialog, ProfileDialog } from "@/components/app/UserDialogs";
 import { ProductDialog, type Product } from "@/components/app/ProductDialog";
@@ -33,7 +33,7 @@ function Index() {
   const [unread, setUnread] = useState(0);
   const [activeCat, setActiveCat] = useState<string | null>(null);
 
-  const [authOpen, setAuthOpen] = useState(false);
+  const openAuth = () => navigate({ to: "/auth" });
   const [topupOpen, setTopupOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
@@ -70,7 +70,7 @@ function Index() {
     return () => { supabase.removeChannel(ch); };
   }, [user]);
 
-  const openIfAuth = (fn: () => void) => (user ? fn() : setAuthOpen(true));
+  const openIfAuth = (fn: () => void) => (user ? fn() : openAuth());
 
   const homeProducts = products.filter((p) => !p.hidden_from_home);
   const shownProducts = activeCat ? products.filter((p) => p.category_id === activeCat) : homeProducts.filter((p) => !p.is_service);
@@ -80,7 +80,7 @@ function Index() {
     <div className="min-h-screen pb-28 pt-20" style={settings?.primary_color ? ({ ["--primary" as string]: settings.primary_color } as React.CSSProperties) : undefined}>
       <Header
         siteName={settings?.site_name || "Roblox ID Shop"} logoUrl={settings?.logo_url} profile={profile} unreadMsgs={unread} isAdmin={isAdmin}
-        onLogin={() => setAuthOpen(true)} onProfile={() => openIfAuth(() => setProfOpen(true))}
+        onLogin={openAuth} onProfile={() => openIfAuth(() => setProfOpen(true))}
         onHistory={() => openIfAuth(() => setHistoryOpen(true))} onTopup={() => openIfAuth(() => setTopupOpen(true))}
         onAdmin={() => navigate({ to: "/admin" })} onMessages={() => openIfAuth(() => setMsgOpen(true))} helpLink={settings?.help_link}
       />
@@ -200,12 +200,11 @@ function Index() {
       />
 
       <AdPopup />
-      <AuthDialog open={authOpen} onOpenChange={setAuthOpen} />
       {user && <TopupDialog open={topupOpen} onOpenChange={setTopupOpen} userId={user.id} qrUrl={settings?.qr_url} onDone={reloadProfile} />}
       {user && <HistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} userId={user.id} />}
       {user && <MessagesDialog open={msgOpen} onOpenChange={setMsgOpen} userId={user.id} />}
       {user && profile && <ProfileDialog open={profOpen} onOpenChange={setProfOpen} profile={profile} onUpdated={reloadProfile} />}
-      <ProductDialog product={selected} onOpenChange={(o) => !o && setSelected(null)} onPurchased={() => { reloadProfile(); loadStock(); }} isLoggedIn={!!user} onRequireLogin={() => { setSelected(null); setAuthOpen(true); }} />
+      <ProductDialog product={selected} onOpenChange={(o) => !o && setSelected(null)} onPurchased={() => { reloadProfile(); loadStock(); }} isLoggedIn={!!user} onRequireLogin={() => { setSelected(null); openAuth(); }} />
       <StatusDialog />
     </div>
   );

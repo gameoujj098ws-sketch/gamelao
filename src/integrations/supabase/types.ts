@@ -38,6 +38,36 @@ export type Database = {
         }
         Relationships: []
       }
+      card_topups: {
+        Row: {
+          card_code: string
+          created_at: string
+          gross_amount: number
+          id: string
+          net_amount: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          card_code: string
+          created_at?: string
+          gross_amount?: number
+          id?: string
+          net_amount?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          card_code?: string
+          created_at?: string
+          gross_amount?: number
+          id?: string
+          net_amount?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -424,6 +454,7 @@ export type Database = {
         Returns: undefined
       }
       admin_stats: { Args: never; Returns: Json }
+      approve_card_topup: { Args: { _id: string }; Returns: undefined }
       approve_topup: { Args: { _topup_id: string }; Returns: undefined }
       has_role: {
         Args: {
@@ -438,11 +469,13 @@ export type Database = {
         Returns: Json
       }
       redeem_code: { Args: { _code: string }; Returns: Json }
+      reject_card_topup: { Args: { _id: string }; Returns: undefined }
       reject_topup: { Args: { _topup_id: string }; Returns: undefined }
       resolve_service_order: {
         Args: { _order_id: string; _success: boolean }
         Returns: undefined
       }
+      submit_card_topup: { Args: { _card: string }; Returns: Json }
       top_spenders: {
         Args: never
         Returns: {

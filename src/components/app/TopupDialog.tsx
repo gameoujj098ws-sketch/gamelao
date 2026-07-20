@@ -78,16 +78,33 @@ export function TopupDialog({
     }
   };
 
+  const [card, setCard] = useState("");
+  const submitCard = async () => {
+    if (!/^\d{14}$/.test(card.trim())) return statusDialog.error("ລົ້ມເຫຼວ", "ບັດຕ້ອງເປັນຕົວເລກ 14 ຫຼັກ");
+    setLoading(true);
+    try {
+      const { error } = await supabase.rpc("submit_card_topup", { _card: card.trim() });
+      if (error) throw error;
+      onOpenChange(false);
+      setCard("");
+      statusDialog.success("ສຳເລັດ", "ສົ່ງບັດໃຫ້ແອັດມິນແລ້ວ (ຮັບ 6,000₭ ຫຼັງອະນຸມັດ)");
+      onDone();
+    } catch (e) {
+      statusDialog.error("ລົ້ມເຫຼວ", (e as Error).message);
+    } finally { setLoading(false); }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>ເຕີມເງີນເຂົ້າກະເປົ໋າ</DialogTitle>
         </DialogHeader>
-        <Tabs defaultValue="qr">
-          <TabsList className="grid grid-cols-2 w-full">
-            <TabsTrigger value="qr">QR Code</TabsTrigger>
-            <TabsTrigger value="code">ໃສ່ໂຄດ</TabsTrigger>
+        <Tabs defaultValue="card">
+          <TabsList className="grid grid-cols-3 w-full">
+            <TabsTrigger value="card">ບັດ 40%</TabsTrigger>
+            <TabsTrigger value="code">ໂຄດ</TabsTrigger>
+            <TabsTrigger value="qr">QR</TabsTrigger>
           </TabsList>
           <TabsContent value="qr" className="space-y-3 pt-3">
             {!showQr ? (
@@ -143,6 +160,19 @@ export function TopupDialog({
               <Input value={code} onChange={(e) => setCode(e.target.value)} />
             </div>
             <Button className="w-full" disabled={loading} onClick={submitCode}>ໃຊ້ໂຄດ</Button>
+          </TabsContent>
+          <TabsContent value="card" className="space-y-3 pt-3">
+            <div className="rounded-xl bg-primary/10 border border-primary/30 p-3 text-xs space-y-1">
+              <div className="font-semibold">ບັດເຕີມເງີນ (14 ຫຼັກ)</div>
+              <div>• ໜຶ່ງບັດ = 10,000 ກີບ</div>
+              <div>• ຄ່າທຳນຽມ 40% → ຮັບຈິງ <b>6,000 ກີບ</b></div>
+              <div>• ຫຼັງແອັດມິນອະນຸມັດ ເງີນເຂົ້າກະເປົ໋າທັນທີ</div>
+            </div>
+            <div>
+              <Label>ເລກບັດ (14 ຫຼັກ)</Label>
+              <Input inputMode="numeric" maxLength={14} value={card} onChange={(e) => setCard(e.target.value.replace(/\D/g, ""))} placeholder="12345678901234" />
+            </div>
+            <Button className="w-full" disabled={loading || card.length !== 14} onClick={submitCard}>ສົ່ງບັດ</Button>
           </TabsContent>
         </Tabs>
       </DialogContent>
