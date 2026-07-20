@@ -200,12 +200,11 @@ function Index() {
       />
 
       <AdPopup />
-      <AuthDialog open={authOpen} onOpenChange={setAuthOpen} />
       {user && <TopupDialog open={topupOpen} onOpenChange={setTopupOpen} userId={user.id} qrUrl={settings?.qr_url} onDone={reloadProfile} />}
       {user && <HistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} userId={user.id} />}
       {user && <MessagesDialog open={msgOpen} onOpenChange={setMsgOpen} userId={user.id} />}
       {user && profile && <ProfileDialog open={profOpen} onOpenChange={setProfOpen} profile={profile} onUpdated={reloadProfile} />}
-      <ProductDialog product={selected} onOpenChange={(o) => !o && setSelected(null)} onPurchased={() => { reloadProfile(); loadStock(); }} isLoggedIn={!!user} onRequireLogin={() => { setSelected(null); setAuthOpen(true); }} />
+      <ProductDialog product={selected} onOpenChange={(o) => !o && setSelected(null)} onPurchased={() => { reloadProfile(); loadStock(); }} isLoggedIn={!!user} onRequireLogin={() => { setSelected(null); openAuth(); }} />
       <StatusDialog />
     </div>
   );
