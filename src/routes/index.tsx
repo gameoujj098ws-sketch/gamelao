@@ -33,7 +33,7 @@ function Index() {
   const [unread, setUnread] = useState(0);
   const [activeCat, setActiveCat] = useState<string | null>(null);
 
-  const [authOpen, setAuthOpen] = useState(false);
+  const openAuth = () => navigate({ to: "/auth" });
   const [topupOpen, setTopupOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
@@ -70,7 +70,7 @@ function Index() {
     return () => { supabase.removeChannel(ch); };
   }, [user]);
 
-  const openIfAuth = (fn: () => void) => (user ? fn() : setAuthOpen(true));
+  const openIfAuth = (fn: () => void) => (user ? fn() : openAuth());
 
   const homeProducts = products.filter((p) => !p.hidden_from_home);
   const shownProducts = activeCat ? products.filter((p) => p.category_id === activeCat) : homeProducts.filter((p) => !p.is_service);
@@ -80,7 +80,7 @@ function Index() {
     <div className="min-h-screen pb-28 pt-20" style={settings?.primary_color ? ({ ["--primary" as string]: settings.primary_color } as React.CSSProperties) : undefined}>
       <Header
         siteName={settings?.site_name || "Roblox ID Shop"} logoUrl={settings?.logo_url} profile={profile} unreadMsgs={unread} isAdmin={isAdmin}
-        onLogin={() => setAuthOpen(true)} onProfile={() => openIfAuth(() => setProfOpen(true))}
+        onLogin={openAuth} onProfile={() => openIfAuth(() => setProfOpen(true))}
         onHistory={() => openIfAuth(() => setHistoryOpen(true))} onTopup={() => openIfAuth(() => setTopupOpen(true))}
         onAdmin={() => navigate({ to: "/admin" })} onMessages={() => openIfAuth(() => setMsgOpen(true))} helpLink={settings?.help_link}
       />
