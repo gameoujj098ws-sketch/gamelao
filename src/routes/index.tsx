@@ -5,7 +5,7 @@ import { useSession } from "@/hooks/useSession";
 import { formatKip } from "@/lib/format";
 import { Header, BottomNav } from "@/components/app/Layout";
 
-import { TopupDialog } from "@/components/app/TopupDialog";
+
 import { HistoryDialog, MessagesDialog, ProfileDialog } from "@/components/app/UserDialogs";
 import { ProductDialog, type Product } from "@/components/app/ProductDialog";
 import { AdPopup } from "@/components/app/AdPopup";
@@ -81,7 +81,7 @@ function Index() {
       <Header
         siteName={settings?.site_name || "Roblox ID Shop"} logoUrl={settings?.logo_url} profile={profile} unreadMsgs={unread} isAdmin={isAdmin}
         onLogin={openAuth} onProfile={() => openIfAuth(() => setProfOpen(true))}
-        onHistory={() => openIfAuth(() => setHistoryOpen(true))} onTopup={() => openIfAuth(() => setTopupOpen(true))}
+        onHistory={() => openIfAuth(() => setHistoryOpen(true))} onTopup={goTopup}
         onAdmin={() => navigate({ to: "/admin" })} onMessages={() => openIfAuth(() => setMsgOpen(true))} helpLink={settings?.help_link}
       />
 
@@ -193,14 +193,13 @@ function Index() {
       </main>
 
       <BottomNav
-        onTopup={() => openIfAuth(() => setTopupOpen(true))}
+        onTopup={goTopup}
         onProducts={() => window.scrollTo({ top: 400, behavior: "smooth" })}
         onHistory={() => openIfAuth(() => setHistoryOpen(true))}
         onHelp={() => settings?.help_link ? window.open(settings.help_link, "_blank") : statusDialog.error("ຍັງບໍ່ໄດ້ຕັ້ງ", "ແອັດມິນຍັງບໍ່ໄດ້ຕັ້ງລິ້ງຊ່ວຍເຫຼືອ")}
       />
 
       <AdPopup />
-      {user && <TopupDialog open={topupOpen} onOpenChange={setTopupOpen} userId={user.id} qrUrl={settings?.qr_url} onDone={reloadProfile} />}
       {user && <HistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} userId={user.id} />}
       {user && <MessagesDialog open={msgOpen} onOpenChange={setMsgOpen} userId={user.id} />}
       {user && profile && <ProfileDialog open={profOpen} onOpenChange={setProfOpen} profile={profile} onUpdated={reloadProfile} />}
