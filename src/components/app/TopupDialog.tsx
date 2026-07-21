@@ -38,24 +38,42 @@ export function TopupDialog({
     if (finalAmount < 1000) return statusDialog.error("ລົ້ມເຫຼວ", "ຈຳນວນເງີນບໍ່ຖືກຕ້ອງ");
     setLoading(true);
     try {
-      const path = `${userId}/${Date.now()}-${file.name}`;
-      const up = await supabase.storage.from("slips").upload(path, file);
-      if (up.error) throw up.error;
-      const { error } = await supabase.from("topups").insert({
+      // sanitize filename: keep only ASCII alphanum, dot, dash, underscore
+      const ext = file.name.includes(".") ? file.name.split(".").pop()!.toLowerCase().replace(/[^a-z0-9]/g, "") : "jpg";
+      const safeExt = ext || "jpg";
+      const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
+      console.log("[slip-upload] start", { path, size: file.size, type: file.type, name: file.name });
+
+      // Ensure session is fresh so RLS sees auth.uid()
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log("[slip-upload] session user", sessionData.session?.user?.id, "expected", userId);
+      if (!sessionData.session) throw new Error("ບໍ່ໄດ້ເຂົ້າສູ່ລະບົບ (session ຫາຍ)");
+
+      const up = await supabase.storage.from("slips").upload(path, file, {
+        contentType: file.type || "image/jpeg",
+        upsert: false,
+      });
+      console.log("[slip-upload] storage result", up);
+      if (up.error) throw new Error(`Upload storage ຜິດພາດ: ${up.error.message}`);
+
+      const ins = await supabase.from("topups").insert({
         user_id: userId,
         amount: finalAmount,
         slip_url: path,
         method: "qr",
         status: "pending",
       });
-      if (error) throw error;
+      console.log("[slip-upload] insert result", ins);
+      if (ins.error) throw new Error(`ບັນທຶກຂໍ້ມູນຜິດພາດ: ${ins.error.message}`);
+
       onOpenChange(false);
       setFile(null);
       setShowQr(false);
       statusDialog.success("ສຳເລັດ", "ສົ່ງສະລິບໃຫ້ແອັດມິນແລ້ວ ລໍຖ້າອະນຸມັດ");
       onDone();
     } catch (e: unknown) {
-      statusDialog.error("ລົ້ມເຫຼວ", (e as Error).message);
+      console.error("[slip-upload] failed", e);
+      statusDialog.error("ລົ້ມເຫຼວ", (e as Error).message || "ອັບໂຫຼດບໍ່ສຳເລັດ");
     } finally {
       setLoading(false);
     }
