@@ -34,7 +34,7 @@ function Index() {
   const [activeCat, setActiveCat] = useState<string | null>(null);
 
   const openAuth = () => navigate({ to: "/auth" });
-  const [topupOpen, setTopupOpen] = useState(false);
+  const goTopup = () => (user ? navigate({ to: "/topup" }) : openAuth());
   const [historyOpen, setHistoryOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
   const [profOpen, setProfOpen] = useState(false);
