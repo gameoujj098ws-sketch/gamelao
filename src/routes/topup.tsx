@@ -189,10 +189,11 @@ function TopupPage() {
   };
 
   const back = () => {
-    if (method === "qr-pay") setMethod("qr-amount");
-    else if (method === "menu") nav({ to: "/" });
+    if (method === "qr-pay") return; // locked until slip submitted or expired
+    if (method === "menu") nav({ to: "/" });
     else setMethod("menu");
   };
+
 
   return (
     <div className="min-h-screen pb-8">
