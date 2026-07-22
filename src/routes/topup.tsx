@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,46 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatKip } from "@/lib/format";
 import { statusDialog, StatusDialog } from "@/components/app/StatusDialog";
-import { ArrowLeft, CreditCard, Ticket, QrCode, Upload, Wallet } from "lucide-react";
+import { ArrowLeft, CreditCard, Ticket, QrCode, Upload, Wallet, Clock } from "lucide-react";
+import { verifySlip } from "@/lib/verify-slip.functions";
+
+const QR_SESSION_KEY = "qr_topup_session_v1";
+const QR_TTL_MS = 15 * 60 * 1000;
+const RECIPIENT_NAME = "SOMYONE KHAMKHEUNG";
+
+type QrSession = { amount: number; startedAt: number };
+function readQrSession(): QrSession | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(QR_SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw) as QrSession;
+    if (!s?.amount || !s?.startedAt) return null;
+    if (Date.now() - s.startedAt >= QR_TTL_MS) {
+      localStorage.removeItem(QR_SESSION_KEY);
+      return null;
+    }
+    return s;
+  } catch {
+    return null;
+  }
+}
+function writeQrSession(s: QrSession) {
+  localStorage.setItem(QR_SESSION_KEY, JSON.stringify(s));
+}
+function clearQrSession() {
+  localStorage.removeItem(QR_SESSION_KEY);
+}
+export { readQrSession as readActiveQrSession };
+
+async function fileToDataUrl(f: File): Promise<string> {
+  return await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(f);
+  });
+}
 
 export const Route = createFileRoute("/topup")({ component: TopupPage });
 
