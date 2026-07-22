@@ -36,6 +36,11 @@ function Index() {
 
   const openAuth = () => navigate({ to: "/auth" });
   const goTopup = () => (user ? navigate({ to: "/topup" }) : openAuth());
+
+  useEffect(() => {
+    if (readActiveQrSession()) navigate({ to: "/topup" });
+  }, [navigate]);
+
   const [historyOpen, setHistoryOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
   const [profOpen, setProfOpen] = useState(false);
