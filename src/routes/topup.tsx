@@ -65,6 +65,9 @@ function TopupPage() {
   const [code, setCode] = useState("");
   const [card, setCard] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sessionStart, setSessionStart] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const restoredRef = useRef(false);
 
   useEffect(() => {
     supabase.from("site_settings").select("qr_url").eq("id", 1).maybeSingle().then(({ data }) => {
@@ -76,26 +79,90 @@ function TopupPage() {
     if (!loading && !user) nav({ to: "/auth" });
   }, [loading, user, nav]);
 
-  const finalAmount = custom ? parseInt(custom) || 0 : amount;
+  useEffect(() => {
+    if (restoredRef.current) return;
+    const s = readQrSession();
+    if (s) {
+      restoredRef.current = true;
+      setAmount(s.amount);
+      setCustom("");
+      setSessionStart(s.startedAt);
+      setMethod("qr-pay");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (method !== "qr-pay" || !sessionStart) return;
+    const t = setInterval(() => {
+      const n = Date.now();
+      setNow(n);
+      if (n - sessionStart >= QR_TTL_MS) {
+        clearQrSession();
+        setSessionStart(null);
+        setFile(null);
+        setMethod("qr-amount");
+        statusDialog.error("หมดเวลา", "QR Code หมดอายุแล้ว กรุณาสร้างใหม่");
+      }
+    }, 1000);
+    return () => clearInterval(t);
+  }, [method, sessionStart]);
+
+  const finalAmount = sessionStart ? amount : (custom ? parseInt(custom) || 0 : amount);
+  const remainingMs = sessionStart ? Math.max(0, QR_TTL_MS - (now - sessionStart)) : QR_TTL_MS;
+  const mm = String(Math.floor(remainingMs / 60000)).padStart(2, "0");
+  const ss = String(Math.floor((remainingMs % 60000) / 1000)).padStart(2, "0");
+
+  const startQrSession = () => {
+    const s: QrSession = { amount: finalAmount, startedAt: Date.now() };
+    writeQrSession(s);
+    setSessionStart(s.startedAt);
+    setNow(s.startedAt);
+    setMethod("qr-pay");
+  };
+
+  const cancelQrSession = () => {
+    clearQrSession();
+    setSessionStart(null);
+    setFile(null);
+    setMethod("qr-amount");
+  };
 
   const submitSlip = async () => {
     if (!user) return;
-    if (!file) return statusDialog.error("ລົ້ມເຫຼວ", "ກະລຸນາແນບຮູບສະລິບ");
-    if (finalAmount < 1000) return statusDialog.error("ລົ້ມເຫຼວ", "ຈຳນວນເງີນບໍ່ຖືກຕ້ອງ");
+    if (!file) return statusDialog.error("ล้มเหลว", "กรุณาแนบรูปสลิป");
+    if (finalAmount < 1000) return statusDialog.error("ล้มเหลว", "จำนวนเงินไม่ถูกต้อง");
     setBusy(true);
     try {
+      const dataUrl = await fileToDataUrl(file);
+      const verdict = await verifySlip({ data: { imageDataUrl: dataUrl, expectedAmount: finalAmount } });
+      if (!verdict.ok) {
+        statusDialog.error("สลิปไม่ถูกต้อง", verdict.reason ?? "ไม่สามารถตรวจสอบสลิปได้");
+        return;
+      }
+
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
       const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const up = await supabase.storage.from("slips").upload(path, file, { contentType: file.type || "image/jpeg", upsert: false });
       if (up.error) throw new Error(up.error.message);
-      const ins = await supabase.from("topups").insert({ user_id: user.id, amount: finalAmount, slip_url: path, method: "qr", status: "pending" });
+
+      const ins = await supabase.from("topups").insert({ user_id: user.id, amount: finalAmount, slip_url: path, method: "qr", status: "approved" });
       if (ins.error) throw new Error(ins.error.message);
-      statusDialog.success("ສຳເລັດ", "ສົ່ງສະລິບໃຫ້ແອັດມິນແລ້ວ ລໍຖ້າອະນຸມັດ");
-      setFile(null); setMethod("menu"); reloadProfile();
+
+      if (profile) {
+        await supabase.from("profiles").update({ wallet_balance: (profile.wallet_balance ?? 0) + finalAmount }).eq("id", user.id);
+      }
+
+      clearQrSession();
+      setSessionStart(null);
+      setFile(null);
+      setMethod("menu");
+      reloadProfile();
+      statusDialog.success("สำเร็จ", `เติมเงินสำเร็จ +${formatKip(finalAmount)}`);
     } catch (e) {
-      statusDialog.error("ລົ້ມເຫຼວ", (e as Error).message);
+      statusDialog.error("ล้มเหลว", (e as Error).message);
     } finally { setBusy(false); }
   };
+
 
   const submitCode = async () => {
     if (!code.trim()) return statusDialog.error("ລົ້ມເຫຼວ", "ກະລຸນາໃສ່ໂຄດ");
