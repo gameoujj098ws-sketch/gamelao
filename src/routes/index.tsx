@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
 import { formatKip } from "@/lib/format";
 import { Header, BottomNav } from "@/components/app/Layout";
+import { readActiveQrSession } from "@/routes/topup";
 
 
 import { HistoryDialog, MessagesDialog, ProfileDialog } from "@/components/app/UserDialogs";
