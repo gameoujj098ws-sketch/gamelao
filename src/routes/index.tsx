@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
 import { formatKip } from "@/lib/format";
 import { Header, BottomNav } from "@/components/app/Layout";
+import { readActiveQrSession } from "@/routes/topup";
 
 
 import { HistoryDialog, MessagesDialog, ProfileDialog } from "@/components/app/UserDialogs";
@@ -35,6 +36,11 @@ function Index() {
 
   const openAuth = () => navigate({ to: "/auth" });
   const goTopup = () => (user ? navigate({ to: "/topup" }) : openAuth());
+
+  useEffect(() => {
+    if (readActiveQrSession()) navigate({ to: "/topup" });
+  }, [navigate]);
+
   const [historyOpen, setHistoryOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
   const [profOpen, setProfOpen] = useState(false);

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,46 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatKip } from "@/lib/format";
 import { statusDialog, StatusDialog } from "@/components/app/StatusDialog";
-import { ArrowLeft, CreditCard, Ticket, QrCode, Upload, Wallet } from "lucide-react";
+import { ArrowLeft, CreditCard, Ticket, QrCode, Upload, Wallet, Clock } from "lucide-react";
+import { verifySlip } from "@/lib/verify-slip.functions";
+
+const QR_SESSION_KEY = "qr_topup_session_v1";
+const QR_TTL_MS = 15 * 60 * 1000;
+const RECIPIENT_NAME = "SOMYONE KHAMKHEUNG";
+
+type QrSession = { amount: number; startedAt: number };
+function readQrSession(): QrSession | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(QR_SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw) as QrSession;
+    if (!s?.amount || !s?.startedAt) return null;
+    if (Date.now() - s.startedAt >= QR_TTL_MS) {
+      localStorage.removeItem(QR_SESSION_KEY);
+      return null;
+    }
+    return s;
+  } catch {
+    return null;
+  }
+}
+function writeQrSession(s: QrSession) {
+  localStorage.setItem(QR_SESSION_KEY, JSON.stringify(s));
+}
+function clearQrSession() {
+  localStorage.removeItem(QR_SESSION_KEY);
+}
+export { readQrSession as readActiveQrSession };
+
+async function fileToDataUrl(f: File): Promise<string> {
+  return await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(f);
+  });
+}
 
 export const Route = createFileRoute("/topup")({ component: TopupPage });
 
@@ -26,6 +65,9 @@ function TopupPage() {
   const [code, setCode] = useState("");
   const [card, setCard] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sessionStart, setSessionStart] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const restoredRef = useRef(false);
 
   useEffect(() => {
     supabase.from("site_settings").select("qr_url").eq("id", 1).maybeSingle().then(({ data }) => {
@@ -37,26 +79,90 @@ function TopupPage() {
     if (!loading && !user) nav({ to: "/auth" });
   }, [loading, user, nav]);
 
-  const finalAmount = custom ? parseInt(custom) || 0 : amount;
+  useEffect(() => {
+    if (restoredRef.current) return;
+    const s = readQrSession();
+    if (s) {
+      restoredRef.current = true;
+      setAmount(s.amount);
+      setCustom("");
+      setSessionStart(s.startedAt);
+      setMethod("qr-pay");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (method !== "qr-pay" || !sessionStart) return;
+    const t = setInterval(() => {
+      const n = Date.now();
+      setNow(n);
+      if (n - sessionStart >= QR_TTL_MS) {
+        clearQrSession();
+        setSessionStart(null);
+        setFile(null);
+        setMethod("qr-amount");
+        statusDialog.error("หมดเวลา", "QR Code หมดอายุแล้ว กรุณาสร้างใหม่");
+      }
+    }, 1000);
+    return () => clearInterval(t);
+  }, [method, sessionStart]);
+
+  const finalAmount = sessionStart ? amount : (custom ? parseInt(custom) || 0 : amount);
+  const remainingMs = sessionStart ? Math.max(0, QR_TTL_MS - (now - sessionStart)) : QR_TTL_MS;
+  const mm = String(Math.floor(remainingMs / 60000)).padStart(2, "0");
+  const ss = String(Math.floor((remainingMs % 60000) / 1000)).padStart(2, "0");
+
+  const startQrSession = () => {
+    const s: QrSession = { amount: finalAmount, startedAt: Date.now() };
+    writeQrSession(s);
+    setSessionStart(s.startedAt);
+    setNow(s.startedAt);
+    setMethod("qr-pay");
+  };
+
+  const cancelQrSession = () => {
+    clearQrSession();
+    setSessionStart(null);
+    setFile(null);
+    setMethod("qr-amount");
+  };
 
   const submitSlip = async () => {
     if (!user) return;
-    if (!file) return statusDialog.error("ລົ້ມເຫຼວ", "ກະລຸນາແນບຮູບສະລິບ");
-    if (finalAmount < 1000) return statusDialog.error("ລົ້ມເຫຼວ", "ຈຳນວນເງີນບໍ່ຖືກຕ້ອງ");
+    if (!file) return statusDialog.error("ล้มเหลว", "กรุณาแนบรูปสลิป");
+    if (finalAmount < 1000) return statusDialog.error("ล้มเหลว", "จำนวนเงินไม่ถูกต้อง");
     setBusy(true);
     try {
+      const dataUrl = await fileToDataUrl(file);
+      const verdict = await verifySlip({ data: { imageDataUrl: dataUrl, expectedAmount: finalAmount } });
+      if (!verdict.ok) {
+        statusDialog.error("สลิปไม่ถูกต้อง", verdict.reason ?? "ไม่สามารถตรวจสอบสลิปได้");
+        return;
+      }
+
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
       const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const up = await supabase.storage.from("slips").upload(path, file, { contentType: file.type || "image/jpeg", upsert: false });
       if (up.error) throw new Error(up.error.message);
-      const ins = await supabase.from("topups").insert({ user_id: user.id, amount: finalAmount, slip_url: path, method: "qr", status: "pending" });
+
+      const ins = await supabase.from("topups").insert({ user_id: user.id, amount: finalAmount, slip_url: path, method: "qr", status: "approved" });
       if (ins.error) throw new Error(ins.error.message);
-      statusDialog.success("ສຳເລັດ", "ສົ່ງສະລິບໃຫ້ແອັດມິນແລ້ວ ລໍຖ້າອະນຸມັດ");
-      setFile(null); setMethod("menu"); reloadProfile();
+
+      if (profile) {
+        await supabase.from("profiles").update({ wallet_balance: (profile.wallet_balance ?? 0) + finalAmount }).eq("id", user.id);
+      }
+
+      clearQrSession();
+      setSessionStart(null);
+      setFile(null);
+      setMethod("menu");
+      reloadProfile();
+      statusDialog.success("สำเร็จ", `เติมเงินสำเร็จ +${formatKip(finalAmount)}`);
     } catch (e) {
-      statusDialog.error("ລົ້ມເຫຼວ", (e as Error).message);
+      statusDialog.error("ล้มเหลว", (e as Error).message);
     } finally { setBusy(false); }
   };
+
 
   const submitCode = async () => {
     if (!code.trim()) return statusDialog.error("ລົ້ມເຫຼວ", "ກະລຸນາໃສ່ໂຄດ");
@@ -83,10 +189,11 @@ function TopupPage() {
   };
 
   const back = () => {
-    if (method === "qr-pay") setMethod("qr-amount");
-    else if (method === "menu") nav({ to: "/" });
+    if (method === "qr-pay") return; // locked until slip submitted or expired
+    if (method === "menu") nav({ to: "/" });
     else setMethod("menu");
   };
+
 
   return (
     <div className="min-h-screen pb-8">
@@ -151,35 +258,44 @@ function TopupPage() {
               <Label>ຫຼືປ້ອນເອງ (₭)</Label>
               <Input type="number" value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="ຈຳນວນ" />
             </div>
-            <Button className="w-full rounded-2xl" disabled={finalAmount < 1000} onClick={() => setMethod("qr-pay")}>
+            <Button className="w-full rounded-2xl" disabled={finalAmount < 1000} onClick={startQrSession}>
               ສ້າງ QR Code ({formatKip(finalAmount)})
             </Button>
+
           </div>
         )}
 
         {method === "qr-pay" && (
           <div className="glass rounded-3xl p-5 space-y-4">
+            <div className="flex items-center justify-center gap-2 rounded-2xl bg-primary/10 text-primary py-2 font-bold">
+              <Clock className="h-4 w-4" /> เหลือเวลา {mm}:{ss}
+            </div>
             <div className="text-center">
-              <div className="text-sm text-muted-foreground">ຈຳນວນທີ່ຕ້ອງໂອນ</div>
+              <div className="text-sm text-muted-foreground">จำนวนที่ต้องโอน</div>
               <div className="text-3xl font-extrabold text-primary">{formatKip(finalAmount)}</div>
+              <div className="text-xs text-muted-foreground mt-1">ผู้รับ: <b className="text-foreground">{RECIPIENT_NAME}</b></div>
             </div>
             <div className="rounded-2xl border-2 bg-white p-4 flex items-center justify-center">
               {qrUrl ? (
                 <img src={qrUrl} alt="QR" className="w-64 h-64 object-contain" />
               ) : (
                 <div className="w-64 h-64 flex items-center justify-center text-xs text-muted-foreground border-2 border-dashed rounded-lg text-center p-4">
-                  ແອັດມິນຍັງບໍ່ໄດ້ຕັ້ງ QR
+                  แอดมินยังไม่ได้ตั้ง QR
                 </div>
               )}
             </div>
             <label className="flex items-center gap-2 border-2 border-dashed rounded-2xl p-4 cursor-pointer hover:bg-accent/50">
               <Upload className="h-5 w-5 text-primary" />
-              <span className="text-sm flex-1 truncate">{file ? file.name : "ແນບຮູບສະລິບການໂອນ"}</span>
+              <span className="text-sm flex-1 truncate">{file ? file.name : "แนบรูปสลิปโอนเงิน"}</span>
               <input type="file" accept="image/*" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
             </label>
-            <Button className="w-full rounded-2xl" disabled={busy || !file} onClick={submitSlip}>ສົ່ງໃຫ້ແອັດມິນກວດສອບ</Button>
+            <Button className="w-full rounded-2xl" disabled={busy || !file} onClick={submitSlip}>
+              {busy ? "กำลังตรวจสอบสลิป..." : "ส่งสลิปเพื่อตรวจสอบ"}
+            </Button>
+            <Button variant="ghost" className="w-full rounded-2xl text-destructive" onClick={cancelQrSession}>ยกเลิกและเริ่มใหม่</Button>
           </div>
         )}
+
       </main>
       <StatusDialog />
     </div>
