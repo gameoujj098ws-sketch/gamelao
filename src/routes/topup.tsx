@@ -258,9 +258,10 @@ function TopupPage() {
               <Label>ຫຼືປ້ອນເອງ (₭)</Label>
               <Input type="number" value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="ຈຳນວນ" />
             </div>
-            <Button className="w-full rounded-2xl" disabled={finalAmount < 1000} onClick={() => setMethod("qr-pay")}>
+            <Button className="w-full rounded-2xl" disabled={finalAmount < 1000} onClick={startQrSession}>
               ສ້າງ QR Code ({formatKip(finalAmount)})
             </Button>
+
           </div>
         )}
 
