@@ -267,27 +267,35 @@ function TopupPage() {
 
         {method === "qr-pay" && (
           <div className="glass rounded-3xl p-5 space-y-4">
+            <div className="flex items-center justify-center gap-2 rounded-2xl bg-primary/10 text-primary py-2 font-bold">
+              <Clock className="h-4 w-4" /> เหลือเวลา {mm}:{ss}
+            </div>
             <div className="text-center">
-              <div className="text-sm text-muted-foreground">ຈຳນວນທີ່ຕ້ອງໂອນ</div>
+              <div className="text-sm text-muted-foreground">จำนวนที่ต้องโอน</div>
               <div className="text-3xl font-extrabold text-primary">{formatKip(finalAmount)}</div>
+              <div className="text-xs text-muted-foreground mt-1">ผู้รับ: <b className="text-foreground">{RECIPIENT_NAME}</b></div>
             </div>
             <div className="rounded-2xl border-2 bg-white p-4 flex items-center justify-center">
               {qrUrl ? (
                 <img src={qrUrl} alt="QR" className="w-64 h-64 object-contain" />
               ) : (
                 <div className="w-64 h-64 flex items-center justify-center text-xs text-muted-foreground border-2 border-dashed rounded-lg text-center p-4">
-                  ແອັດມິນຍັງບໍ່ໄດ້ຕັ້ງ QR
+                  แอดมินยังไม่ได้ตั้ง QR
                 </div>
               )}
             </div>
             <label className="flex items-center gap-2 border-2 border-dashed rounded-2xl p-4 cursor-pointer hover:bg-accent/50">
               <Upload className="h-5 w-5 text-primary" />
-              <span className="text-sm flex-1 truncate">{file ? file.name : "ແນບຮູບສະລິບການໂອນ"}</span>
+              <span className="text-sm flex-1 truncate">{file ? file.name : "แนบรูปสลิปโอนเงิน"}</span>
               <input type="file" accept="image/*" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
             </label>
-            <Button className="w-full rounded-2xl" disabled={busy || !file} onClick={submitSlip}>ສົ່ງໃຫ້ແອັດມິນກວດສອບ</Button>
+            <Button className="w-full rounded-2xl" disabled={busy || !file} onClick={submitSlip}>
+              {busy ? "กำลังตรวจสอบสลิป..." : "ส่งสลิปเพื่อตรวจสอบ"}
+            </Button>
+            <Button variant="ghost" className="w-full rounded-2xl text-destructive" onClick={cancelQrSession}>ยกเลิกและเริ่มใหม่</Button>
           </div>
         )}
+
       </main>
       <StatusDialog />
     </div>
