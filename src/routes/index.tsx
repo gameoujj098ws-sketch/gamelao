@@ -198,7 +198,7 @@ function Index() {
       <BottomNav
         onTopup={goTopup}
         onProducts={() => window.scrollTo({ top: 400, behavior: "smooth" })}
-        onHistory={() => openIfAuth(() => setHistoryOpen(true))}
+        onHistory={() => openIfAuth(() => navigate({ to: "/history" }))}
         onHelp={() => settings?.help_link ? window.open(settings.help_link, "_blank") : statusDialog.error("ຍັງບໍ່ໄດ້ຕັ້ງ", "ແອັດມິນຍັງບໍ່ໄດ້ຕັ້ງລິ້ງຊ່ວຍເຫຼືອ")}
       />
 
