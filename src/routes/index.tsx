@@ -83,9 +83,9 @@ function Index() {
     <div className="min-h-screen pb-28 pt-20" style={settings?.primary_color ? ({ ["--primary" as string]: settings.primary_color } as React.CSSProperties) : undefined}>
       <Header
         siteName={settings?.site_name || "Roblox ID Shop"} logoUrl={settings?.logo_url} profile={profile} unreadMsgs={unread} isAdmin={isAdmin}
-        onLogin={openAuth} onProfile={() => openIfAuth(() => setProfOpen(true))}
-        onHistory={() => openIfAuth(() => setHistoryOpen(true))} onTopup={goTopup}
-        onAdmin={() => navigate({ to: "/admin" })} onMessages={() => openIfAuth(() => setMsgOpen(true))} helpLink={settings?.help_link}
+        onLogin={openAuth} onProfile={() => openIfAuth(() => navigate({ to: "/profile" }))}
+        onHistory={() => openIfAuth(() => navigate({ to: "/history" }))} onTopup={goTopup}
+        onAdmin={() => navigate({ to: "/admin" })} onMessages={() => openIfAuth(() => navigate({ to: "/messages" }))} helpLink={settings?.help_link}
       />
 
       <main className="max-w-3xl mx-auto p-3 space-y-4">
