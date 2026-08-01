@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TopupRouteImport } from './routes/topup'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -18,6 +19,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const TopupRoute = TopupRouteImport.update({
   id: '/topup',
   path: '/topup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
+  '/messages': typeof MessagesRoute
   '/topup': typeof TopupRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
+  '/messages': typeof MessagesRoute
   '/topup': typeof TopupRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,22 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
+  '/messages': typeof MessagesRoute
   '/topup': typeof TopupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/auth' | '/history' | '/topup'
+  fullPaths: '/' | '/admin' | '/auth' | '/history' | '/messages' | '/topup'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/auth' | '/history' | '/topup'
-  id: '__root__' | '/' | '/admin' | '/auth' | '/history' | '/topup'
+  to: '/' | '/admin' | '/auth' | '/history' | '/messages' | '/topup'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/history'
+    | '/messages'
+    | '/topup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +92,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   HistoryRoute: typeof HistoryRoute
+  MessagesRoute: typeof MessagesRoute
   TopupRoute: typeof TopupRoute
 }
 
@@ -86,6 +103,13 @@ declare module '@tanstack/react-router' {
       path: '/topup'
       fullPath: '/topup'
       preLoaderRoute: typeof TopupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -124,6 +148,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   HistoryRoute: HistoryRoute,
+  MessagesRoute: MessagesRoute,
   TopupRoute: TopupRoute,
 }
 export const routeTree = rootRouteImport
