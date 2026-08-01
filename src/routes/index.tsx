@@ -41,9 +41,6 @@ function Index() {
     if (readActiveQrSession()) navigate({ to: "/topup" });
   }, [navigate]);
 
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [msgOpen, setMsgOpen] = useState(false);
-  const [profOpen, setProfOpen] = useState(false);
   const [selected, setSelected] = useState<Product | null>(null);
 
   const trackedRef = useRef(false);
