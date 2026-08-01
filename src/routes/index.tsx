@@ -7,7 +7,7 @@ import { Header, BottomNav } from "@/components/app/Layout";
 import { readActiveQrSession } from "@/routes/topup";
 
 
-import { HistoryDialog, MessagesDialog, ProfileDialog } from "@/components/app/UserDialogs";
+
 import { ProductDialog, type Product } from "@/components/app/ProductDialog";
 import { AdPopup } from "@/components/app/AdPopup";
 import { StatusDialog, statusDialog } from "@/components/app/StatusDialog";
@@ -41,9 +41,6 @@ function Index() {
     if (readActiveQrSession()) navigate({ to: "/topup" });
   }, [navigate]);
 
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [msgOpen, setMsgOpen] = useState(false);
-  const [profOpen, setProfOpen] = useState(false);
   const [selected, setSelected] = useState<Product | null>(null);
 
   const trackedRef = useRef(false);
@@ -86,9 +83,9 @@ function Index() {
     <div className="min-h-screen pb-28 pt-20" style={settings?.primary_color ? ({ ["--primary" as string]: settings.primary_color } as React.CSSProperties) : undefined}>
       <Header
         siteName={settings?.site_name || "Roblox ID Shop"} logoUrl={settings?.logo_url} profile={profile} unreadMsgs={unread} isAdmin={isAdmin}
-        onLogin={openAuth} onProfile={() => openIfAuth(() => setProfOpen(true))}
-        onHistory={() => openIfAuth(() => setHistoryOpen(true))} onTopup={goTopup}
-        onAdmin={() => navigate({ to: "/admin" })} onMessages={() => openIfAuth(() => setMsgOpen(true))} helpLink={settings?.help_link}
+        onLogin={openAuth} onProfile={() => openIfAuth(() => navigate({ to: "/profile" }))}
+        onHistory={() => openIfAuth(() => navigate({ to: "/history" }))} onTopup={goTopup}
+        onAdmin={() => navigate({ to: "/admin" })} onMessages={() => openIfAuth(() => navigate({ to: "/messages" }))} helpLink={settings?.help_link}
       />
 
       <main className="max-w-3xl mx-auto p-3 space-y-4">
@@ -201,14 +198,11 @@ function Index() {
       <BottomNav
         onTopup={goTopup}
         onProducts={() => window.scrollTo({ top: 400, behavior: "smooth" })}
-        onHistory={() => openIfAuth(() => setHistoryOpen(true))}
+        onHistory={() => openIfAuth(() => navigate({ to: "/history" }))}
         onHelp={() => settings?.help_link ? window.open(settings.help_link, "_blank") : statusDialog.error("ຍັງບໍ່ໄດ້ຕັ້ງ", "ແອັດມິນຍັງບໍ່ໄດ້ຕັ້ງລິ້ງຊ່ວຍເຫຼືອ")}
       />
 
       <AdPopup />
-      {user && <HistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} userId={user.id} />}
-      {user && <MessagesDialog open={msgOpen} onOpenChange={setMsgOpen} userId={user.id} />}
-      {user && profile && <ProfileDialog open={profOpen} onOpenChange={setProfOpen} profile={profile} onUpdated={reloadProfile} />}
       <ProductDialog product={selected} onOpenChange={(o) => !o && setSelected(null)} onPurchased={() => { reloadProfile(); loadStock(); }} isLoggedIn={!!user} onRequireLogin={() => { setSelected(null); openAuth(); }} />
       <StatusDialog />
     </div>
