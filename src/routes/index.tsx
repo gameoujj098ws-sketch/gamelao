@@ -7,7 +7,7 @@ import { Header, BottomNav } from "@/components/app/Layout";
 import { readActiveQrSession } from "@/routes/topup";
 
 
-import { HistoryDialog, MessagesDialog, ProfileDialog } from "@/components/app/UserDialogs";
+
 import { ProductDialog, type Product } from "@/components/app/ProductDialog";
 import { AdPopup } from "@/components/app/AdPopup";
 import { StatusDialog, statusDialog } from "@/components/app/StatusDialog";
