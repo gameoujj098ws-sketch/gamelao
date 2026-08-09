@@ -8,7 +8,7 @@ import { readActiveQrSession } from "@/routes/topup";
 
 
 
-import { ProductDialog, type Product } from "@/components/app/ProductDialog";
+import type { Product } from "@/components/app/ProductDialog";
 import { AdPopup } from "@/components/app/AdPopup";
 import { StatusDialog, statusDialog } from "@/components/app/StatusDialog";
 import { Megaphone, Trophy, ShoppingCart, Package, Users, TrendingUp, CheckCircle2, ShoppingBag, Bell } from "lucide-react";
@@ -24,7 +24,7 @@ type Spender = { username: string; total: number; times: number };
 
 function Index() {
   const navigate = useNavigate();
-  const { user, profile, isAdmin, reloadProfile } = useSession();
+  const { user, profile, isAdmin } = useSession();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [cats, setCats] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -40,8 +40,6 @@ function Index() {
   useEffect(() => {
     if (readActiveQrSession()) navigate({ to: "/topup" });
   }, [navigate]);
-
-  const [selected, setSelected] = useState<Product | null>(null);
 
   const trackedRef = useRef(false);
 
@@ -148,7 +146,7 @@ function Index() {
             <div className="text-sm text-muted-foreground glass rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມສິນຄ້າ</div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              {shownProducts.map((p) => <ProductCard key={p.id} p={p} stock={stockMap[p.id] ?? 0} onClick={() => setSelected(p)} />)}
+              {shownProducts.map((p) => <ProductCard key={p.id} p={p} stock={stockMap[p.id] ?? 0} onClick={() => navigate({ to: "/product/$id", params: { id: p.id } })} />)}
             </div>
           )}
         </section>
@@ -160,7 +158,7 @@ function Index() {
               <div className="text-sm text-muted-foreground glass rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມສິນຄ້າບໍລິການ</div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                {servicesShown.map((p) => <ProductCard key={p.id} p={p} stock={-1} onClick={() => setSelected(p)} />)}
+                {servicesShown.map((p) => <ProductCard key={p.id} p={p} stock={-1} onClick={() => navigate({ to: "/product/$id", params: { id: p.id } })} />)}
               </div>
             )}
           </section>
@@ -203,7 +201,6 @@ function Index() {
       />
 
       <AdPopup />
-      <ProductDialog product={selected} onOpenChange={(o) => !o && setSelected(null)} onPurchased={() => { reloadProfile(); loadStock(); }} isLoggedIn={!!user} onRequireLogin={() => { setSelected(null); openAuth(); }} />
       <StatusDialog />
     </div>
   );
