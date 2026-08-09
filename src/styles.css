@@ -91,7 +91,7 @@
 @layer base {
   * { border-color: var(--color-border); }
   body {
-    background: linear-gradient(160deg, oklch(0.95 0.04 175) 0%, oklch(0.97 0.02 200) 50%, oklch(0.94 0.05 170) 100%);
+    background: linear-gradient(180deg, oklch(0.98 0.015 250) 0%, oklch(0.995 0.004 250) 40%, oklch(0.97 0.02 250) 100%);
     background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-sans);
@@ -99,12 +99,19 @@
 }
 
 @utility glass {
-  background: linear-gradient(145deg, color-mix(in oklab, var(--color-primary) 18%, white) 0%, color-mix(in oklab, var(--color-primary) 6%, white) 100%);
+  background: color-mix(in oklab, white 92%, var(--color-primary) 8%);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid color-mix(in oklab, white 60%, var(--color-primary) 20%);
-  box-shadow: 0 4px 20px -6px color-mix(in oklab, var(--color-primary) 25%, transparent), inset 0 1px 0 rgba(255,255,255,0.6);
+  border: 1px solid color-mix(in oklab, white 82%, var(--color-primary) 18%);
+  box-shadow: 0 6px 22px -10px color-mix(in oklab, var(--color-primary) 30%, transparent);
 }
+
+@utility card-soft {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 2px 12px -6px color-mix(in oklab, var(--color-primary) 25%, transparent);
+}
+
 
 @utility marquee {
   animation: marquee 22s linear infinite;
