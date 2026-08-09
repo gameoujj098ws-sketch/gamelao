@@ -8,7 +8,7 @@ import { readActiveQrSession } from "@/routes/topup";
 
 
 
-import type { Product } from "@/components/app/ProductDialog";
+
 import { AdPopup } from "@/components/app/AdPopup";
 import { StatusDialog, statusDialog } from "@/components/app/StatusDialog";
 import { Megaphone, Trophy, ShoppingCart, Package, Users, TrendingUp, CheckCircle2, ShoppingBag, Bell } from "lucide-react";
@@ -18,6 +18,11 @@ export const Route = createFileRoute("/")({ component: Index });
 type Settings = {
   site_name: string; logo_url: string | null; slide_url: string | null;
   announcement: string; qr_url: string | null; help_link: string | null; primary_color: string | null;
+};
+type Product = {
+  id: string; name: string; price: number; original_price: number | null;
+  description: string | null; image_url: string | null; is_service: boolean;
+  service_field_label: string | null; category_id: string | null; hidden_from_home: boolean;
 };
 type Category = { id: string; name: string; image_url: string | null };
 type Spender = { username: string; total: number; times: number };
@@ -170,7 +175,7 @@ function Index() {
         )}
 
         <section>
-          <h2 className="font-bold mb-2">ສະຖິຕິ</h2>
+          <SectionTitle title="ສະຖິຕິ" />
           <div className="grid grid-cols-2 gap-3">
             <StatBox laoLabel="ຜູ້ໃຊ້ທັງໝົດ" enLabel="User all in shop" value={stats.members} icon={<Users />} />
             <StatBox laoLabel="ຍອດເຂົ້າຊົມເວັບໄຊ" enLabel="Visits to our store" value={stats.visits} icon={<TrendingUp />} />
@@ -180,7 +185,7 @@ function Index() {
         </section>
 
         <section>
-          <h2 className="font-bold mb-2 flex items-center gap-1"><Trophy className="h-4 w-4 text-yellow-500" />ຜູ້ເຕີມເງີນສູງສຸດ</h2>
+          <div className="flex items-center gap-2 mb-3"><span className="h-6 w-1.5 rounded-full bg-primary" /><h2 className="font-extrabold text-lg flex items-center gap-1"><Trophy className="h-4 w-4 text-yellow-500" />ຜູ້ເຕີມເງີນສູງສຸດ</h2></div>
           {spenders.length === 0 ? (
             <div className="text-sm text-muted-foreground glass rounded-2xl p-4 text-center">ຍັງບໍ່ມີຂໍ້ມູນ</div>
           ) : (
@@ -259,6 +264,18 @@ function ProductCard({ p, stock, onClick }: { p: Product; stock: number; onClick
         </div>
       </div>
 
+    </div>
+  );
+}
+
+function SectionTitle({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span className="h-6 w-1.5 rounded-full bg-primary" />
+      <div>
+        <h2 className="font-extrabold text-lg leading-tight">{title}</h2>
+        {subtitle && <div className="text-xs text-muted-foreground">{subtitle}</div>}
+      </div>
     </div>
   );
 }
