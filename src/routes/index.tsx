@@ -209,45 +209,51 @@ function Index() {
 function ProductCard({ p, stock, onClick }: { p: Product; stock: number; onClick: () => void }) {
   const available = p.is_service || stock > 0;
   const isService = p.is_service;
+  const discount = p.original_price && p.original_price > p.price
+    ? Math.round((1 - p.price / p.original_price) * 100) : 0;
   return (
-    <div className="glass rounded-3xl overflow-hidden flex flex-col">
-      <div className="aspect-square bg-muted/50 m-2 rounded-2xl overflow-hidden">
+    <div className="card-soft rounded-3xl overflow-hidden flex flex-col">
+      <button onClick={onClick} className="relative block aspect-square bg-muted/60 overflow-hidden text-left">
         {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-4xl">🎮</div>}
-      </div>
-      <div className="px-3 pb-3 space-y-1.5">
-        <div className="text-sm font-semibold truncate">{p.name}</div>
-        <div className="flex items-baseline gap-1">
-          <span className="text-primary font-extrabold text-lg">{formatKip(p.price)}</span>
-          {p.original_price && p.original_price > p.price && (
-            <span className="text-destructive line-through text-xs">{formatKip(p.original_price)}</span>
+        {discount > 0 && (
+          <span className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[11px] font-bold px-2.5 py-0.5 rounded-full">-{discount}%</span>
+        )}
+      </button>
+      <div className="p-3 space-y-2">
+        <button onClick={onClick} className="block w-full text-left text-sm font-bold truncate">{p.name}</button>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-primary font-extrabold text-xl">{formatKip(p.price)}</span>
+          {discount > 0 && (
+            <span className="text-muted-foreground line-through text-xs">{formatKip(p.original_price!)}</span>
           )}
         </div>
         <button
           onClick={onClick}
           disabled={!available}
-          className="w-full bg-gradient-to-b from-primary/80 to-primary text-primary-foreground rounded-2xl py-2 flex items-center justify-center gap-1.5 font-bold text-sm shadow-md active:scale-[.98] disabled:opacity-50 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
+          className="w-full bg-primary text-primary-foreground rounded-full py-2 flex items-center justify-center gap-1.5 font-bold text-sm active:scale-[.98] disabled:opacity-50 disabled:bg-muted disabled:text-muted-foreground"
         >
           {isService ? <Bell className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
           {isService ? "ສັ່ງຈຳເນີ" : "ຊື້ສິນຄ້າ"}
         </button>
-        <div className="flex items-center justify-between text-xs pt-0.5">
+        <div className="flex items-center justify-between text-[11px] pt-0.5">
           {isService ? (
             <span className="flex items-center gap-1 text-primary font-medium">
               <Bell className="h-3 w-3" />ສິນຄ້າບໍລິການ
             </span>
           ) : (
             <>
-              <span className="flex items-center gap-1 text-primary font-medium">
-                <span className={`h-2 w-2 rounded-full ${available ? "bg-green-500" : "bg-red-500"}`} />
-                {available ? "ພ້ອມຂາຍ" : "ໝົດ"}
+              <span className="flex items-center gap-1 font-medium">
+                <span className={`h-2 w-2 rounded-full ${available ? "bg-success" : "bg-destructive"}`} />
+                <span className={available ? "text-success" : "text-destructive"}>{available ? "ພ້ອມຂາຍ" : "ໝົດ"}</span>
               </span>
-              <span className="flex items-center gap-1 text-muted-foreground">
+              <span className="flex items-center gap-1 text-primary">
                 <Package className="h-3 w-3" />ເຫຼືອ {stock} ອັນ
               </span>
             </>
           )}
         </div>
       </div>
+
     </div>
   );
 }
