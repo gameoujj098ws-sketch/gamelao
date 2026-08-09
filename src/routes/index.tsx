@@ -8,7 +8,7 @@ import { readActiveQrSession } from "@/routes/topup";
 
 
 
-import { ProductDialog, type Product } from "@/components/app/ProductDialog";
+
 import { AdPopup } from "@/components/app/AdPopup";
 import { StatusDialog, statusDialog } from "@/components/app/StatusDialog";
 import { Megaphone, Trophy, ShoppingCart, Package, Users, TrendingUp, CheckCircle2, ShoppingBag, Bell } from "lucide-react";
@@ -19,12 +19,17 @@ type Settings = {
   site_name: string; logo_url: string | null; slide_url: string | null;
   announcement: string; qr_url: string | null; help_link: string | null; primary_color: string | null;
 };
+type Product = {
+  id: string; name: string; price: number; original_price: number | null;
+  description: string | null; image_url: string | null; is_service: boolean;
+  service_field_label: string | null; category_id: string | null; hidden_from_home: boolean;
+};
 type Category = { id: string; name: string; image_url: string | null };
 type Spender = { username: string; total: number; times: number };
 
 function Index() {
   const navigate = useNavigate();
-  const { user, profile, isAdmin, reloadProfile } = useSession();
+  const { user, profile, isAdmin } = useSession();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [cats, setCats] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -40,8 +45,6 @@ function Index() {
   useEffect(() => {
     if (readActiveQrSession()) navigate({ to: "/topup" });
   }, [navigate]);
-
-  const [selected, setSelected] = useState<Product | null>(null);
 
   const trackedRef = useRef(false);
 
@@ -97,41 +100,43 @@ function Index() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 glass rounded-2xl px-3 py-2 overflow-hidden">
-          <Megaphone className="h-4 w-4 text-primary shrink-0" />
+        <div className="flex items-center gap-3 bg-primary/5 border border-primary/15 rounded-full pl-1.5 pr-3 py-1.5 overflow-hidden">
+          <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+            <Megaphone className="h-4 w-4" />
+          </div>
           <div className="overflow-hidden flex-1">
             <div className="marquee whitespace-nowrap text-sm">{settings?.announcement || "ຍິນດີຕ້ອນຮັບເຂົ້າສູ່ຮ້ານຂາຍໄອດີເກມ Roblox"}</div>
           </div>
         </div>
 
         <section>
-          <h2 className="font-bold mb-2">ໝວດໝູ່ສິນຄ້າທັງໝົດ</h2>
+          <SectionTitle title="ໝວດໝູ່ແນະນຳສຳລັບລູກຄ້າ" subtitle="ເລືອກໝວດໝູ່ທີ່ແນະນຳ" />
           {cats.length === 0 ? (
-            <div className="text-sm text-muted-foreground glass rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມໝວດ</div>
+            <div className="text-sm text-muted-foreground card-soft rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມໝວດ</div>
           ) : (
             <div className="space-y-3">
               {cats.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => setActiveCat(activeCat === c.id ? null : c.id)}
-                  className={`w-full glass rounded-3xl overflow-hidden text-left block ${activeCat === c.id ? "ring-2 ring-primary" : ""}`}
+                  className={`w-full card-soft rounded-3xl overflow-hidden text-left block p-2 ${activeCat === c.id ? "ring-2 ring-primary" : ""}`}
                 >
-                  <div className="relative aspect-[16/6] bg-muted">
+                  <div className="relative aspect-[16/7] bg-muted rounded-2xl overflow-hidden">
                     {c.image_url ? (
                       <img src={c.image_url} alt={c.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl">🎮</div>
                     )}
-                    <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-3 py-1 rounded-full font-medium">
+                    <span className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-3 py-1 rounded-full font-medium">
                       {c.name}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 p-3">
+                  <div className="flex items-center gap-2 p-2 pt-3">
                     <div className="flex-1 min-w-0">
                       <div className="font-bold truncate">{c.name}</div>
-                      <div className="text-xs text-muted-foreground truncate">ຂອງ{c.name}</div>
+                      <div className="text-xs text-muted-foreground truncate">ກົດເພື່ອເບິ່ງສິນຄ້າໃນໝວດໝູ່ນີ້</div>
                     </div>
-                    <div className="h-11 w-11 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
+                    <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                       <ShoppingBag className="h-5 w-5 text-primary" />
                     </div>
                   </div>
@@ -142,32 +147,35 @@ function Index() {
         </section>
 
         <section>
-          <h2 className="font-bold text-2xl mb-1">{activeCat ? cats.find((c) => c.id === activeCat)?.name : "ສິນຄ້າແນະນຳສຳລັບລູກຄ້າ"}</h2>
-          <div className="text-sm text-muted-foreground mb-3">ເລືອກຊື້ສິນຄ້າຍອດນິຍົມ</div>
+          <SectionTitle
+            title={activeCat ? cats.find((c) => c.id === activeCat)?.name ?? "" : "ສິນຄ້າແນະນຳສຳລັບລູກຄ້າ"}
+            subtitle="ເລືອກຊື້ສິນຄ້າຍອດນິຍົມ"
+          />
           {shownProducts.length === 0 ? (
-            <div className="text-sm text-muted-foreground glass rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມສິນຄ້າ</div>
+            <div className="text-sm text-muted-foreground card-soft rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມສິນຄ້າ</div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              {shownProducts.map((p) => <ProductCard key={p.id} p={p} stock={stockMap[p.id] ?? 0} onClick={() => setSelected(p)} />)}
+              {shownProducts.map((p) => <ProductCard key={p.id} p={p} stock={stockMap[p.id] ?? 0} onClick={() => navigate({ to: "/product/$id", params: { id: p.id } })} />)}
             </div>
           )}
         </section>
 
         {!activeCat && (
           <section>
-            <h2 className="font-bold mb-2">ສິນຄ້າບໍລິການ</h2>
+            <SectionTitle title="ສິນຄ້າບໍລິການ" subtitle="ສິນຄ້າທີ່ຕ້ອງກรອກຂໍ້ມູນ" />
             {servicesShown.length === 0 ? (
-              <div className="text-sm text-muted-foreground glass rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມສິນຄ້າບໍລິການ</div>
+              <div className="text-sm text-muted-foreground card-soft rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມສິນຄ້າບໍລິການ</div>
+
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                {servicesShown.map((p) => <ProductCard key={p.id} p={p} stock={-1} onClick={() => setSelected(p)} />)}
+                {servicesShown.map((p) => <ProductCard key={p.id} p={p} stock={-1} onClick={() => navigate({ to: "/product/$id", params: { id: p.id } })} />)}
               </div>
             )}
           </section>
         )}
 
         <section>
-          <h2 className="font-bold mb-2">ສະຖິຕິ</h2>
+          <SectionTitle title="ສະຖິຕິ" />
           <div className="grid grid-cols-2 gap-3">
             <StatBox laoLabel="ຜູ້ໃຊ້ທັງໝົດ" enLabel="User all in shop" value={stats.members} icon={<Users />} />
             <StatBox laoLabel="ຍອດເຂົ້າຊົມເວັບໄຊ" enLabel="Visits to our store" value={stats.visits} icon={<TrendingUp />} />
@@ -177,7 +185,7 @@ function Index() {
         </section>
 
         <section>
-          <h2 className="font-bold mb-2 flex items-center gap-1"><Trophy className="h-4 w-4 text-yellow-500" />ຜູ້ເຕີມເງີນສູງສຸດ</h2>
+          <div className="flex items-center gap-2 mb-3"><span className="h-6 w-1.5 rounded-full bg-primary" /><h2 className="font-extrabold text-lg flex items-center gap-1"><Trophy className="h-4 w-4 text-yellow-500" />ຜູ້ເຕີມເງີນສູງສຸດ</h2></div>
           {spenders.length === 0 ? (
             <div className="text-sm text-muted-foreground glass rounded-2xl p-4 text-center">ຍັງບໍ່ມີຂໍ້ມູນ</div>
           ) : (
@@ -203,7 +211,6 @@ function Index() {
       />
 
       <AdPopup />
-      <ProductDialog product={selected} onOpenChange={(o) => !o && setSelected(null)} onPurchased={() => { reloadProfile(); loadStock(); }} isLoggedIn={!!user} onRequireLogin={() => { setSelected(null); openAuth(); }} />
       <StatusDialog />
     </div>
   );
@@ -212,44 +219,62 @@ function Index() {
 function ProductCard({ p, stock, onClick }: { p: Product; stock: number; onClick: () => void }) {
   const available = p.is_service || stock > 0;
   const isService = p.is_service;
+  const discount = p.original_price && p.original_price > p.price
+    ? Math.round((1 - p.price / p.original_price) * 100) : 0;
   return (
-    <div className="glass rounded-3xl overflow-hidden flex flex-col">
-      <div className="aspect-square bg-muted/50 m-2 rounded-2xl overflow-hidden">
+    <div className="card-soft rounded-3xl overflow-hidden flex flex-col">
+      <button onClick={onClick} className="relative block aspect-square bg-muted/60 overflow-hidden text-left">
         {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-4xl">🎮</div>}
-      </div>
-      <div className="px-3 pb-3 space-y-1.5">
-        <div className="text-sm font-semibold truncate">{p.name}</div>
-        <div className="flex items-baseline gap-1">
-          <span className="text-primary font-extrabold text-lg">{formatKip(p.price)}</span>
-          {p.original_price && p.original_price > p.price && (
-            <span className="text-destructive line-through text-xs">{formatKip(p.original_price)}</span>
+        {discount > 0 && (
+          <span className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[11px] font-bold px-2.5 py-0.5 rounded-full">-{discount}%</span>
+        )}
+      </button>
+      <div className="p-3 space-y-2">
+        <button onClick={onClick} className="block w-full text-left text-sm font-bold truncate">{p.name}</button>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-primary font-extrabold text-xl">{formatKip(p.price)}</span>
+          {discount > 0 && (
+            <span className="text-muted-foreground line-through text-xs">{formatKip(p.original_price!)}</span>
           )}
         </div>
         <button
           onClick={onClick}
           disabled={!available}
-          className="w-full bg-gradient-to-b from-primary/80 to-primary text-primary-foreground rounded-2xl py-2 flex items-center justify-center gap-1.5 font-bold text-sm shadow-md active:scale-[.98] disabled:opacity-50 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
+          className="w-full bg-primary text-primary-foreground rounded-full py-2 flex items-center justify-center gap-1.5 font-bold text-sm active:scale-[.98] disabled:opacity-50 disabled:bg-muted disabled:text-muted-foreground"
         >
           {isService ? <Bell className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
           {isService ? "ສັ່ງຈຳເນີ" : "ຊື້ສິນຄ້າ"}
         </button>
-        <div className="flex items-center justify-between text-xs pt-0.5">
+        <div className="flex items-center justify-between text-[11px] pt-0.5">
           {isService ? (
             <span className="flex items-center gap-1 text-primary font-medium">
               <Bell className="h-3 w-3" />ສິນຄ້າບໍລິການ
             </span>
           ) : (
             <>
-              <span className="flex items-center gap-1 text-primary font-medium">
-                <span className={`h-2 w-2 rounded-full ${available ? "bg-green-500" : "bg-red-500"}`} />
-                {available ? "ພ້ອມຂາຍ" : "ໝົດ"}
+              <span className="flex items-center gap-1 font-medium">
+                <span className={`h-2 w-2 rounded-full ${available ? "bg-success" : "bg-destructive"}`} />
+                <span className={available ? "text-success" : "text-destructive"}>{available ? "ພ້ອມຂາຍ" : "ໝົດ"}</span>
               </span>
-              <span className="flex items-center gap-1 text-muted-foreground">
+              <span className="flex items-center gap-1 text-primary">
                 <Package className="h-3 w-3" />ເຫຼືອ {stock} ອັນ
               </span>
             </>
           )}
         </div>
+      </div>
+
+    </div>
+  );
+}
+
+function SectionTitle({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span className="h-6 w-1.5 rounded-full bg-primary" />
+      <div>
+        <h2 className="font-extrabold text-lg leading-tight">{title}</h2>
+        {subtitle && <div className="text-xs text-muted-foreground">{subtitle}</div>}
       </div>
     </div>
   );
