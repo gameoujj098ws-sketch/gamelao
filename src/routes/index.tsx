@@ -95,41 +95,43 @@ function Index() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 glass rounded-2xl px-3 py-2 overflow-hidden">
-          <Megaphone className="h-4 w-4 text-primary shrink-0" />
+        <div className="flex items-center gap-3 bg-primary/5 border border-primary/15 rounded-full pl-1.5 pr-3 py-1.5 overflow-hidden">
+          <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+            <Megaphone className="h-4 w-4" />
+          </div>
           <div className="overflow-hidden flex-1">
             <div className="marquee whitespace-nowrap text-sm">{settings?.announcement || "ຍິນດີຕ້ອນຮັບເຂົ້າສູ່ຮ້ານຂາຍໄອດີເກມ Roblox"}</div>
           </div>
         </div>
 
         <section>
-          <h2 className="font-bold mb-2">ໝວດໝູ່ສິນຄ້າທັງໝົດ</h2>
+          <SectionTitle title="ໝວດໝູ່ແນະນຳສຳລັບລູກຄ້າ" subtitle="ເລືອກໝວດໝູ່ທີ່ແນະນຳ" />
           {cats.length === 0 ? (
-            <div className="text-sm text-muted-foreground glass rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມໝວດ</div>
+            <div className="text-sm text-muted-foreground card-soft rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມໝວດ</div>
           ) : (
             <div className="space-y-3">
               {cats.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => setActiveCat(activeCat === c.id ? null : c.id)}
-                  className={`w-full glass rounded-3xl overflow-hidden text-left block ${activeCat === c.id ? "ring-2 ring-primary" : ""}`}
+                  className={`w-full card-soft rounded-3xl overflow-hidden text-left block p-2 ${activeCat === c.id ? "ring-2 ring-primary" : ""}`}
                 >
-                  <div className="relative aspect-[16/6] bg-muted">
+                  <div className="relative aspect-[16/7] bg-muted rounded-2xl overflow-hidden">
                     {c.image_url ? (
                       <img src={c.image_url} alt={c.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl">🎮</div>
                     )}
-                    <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-3 py-1 rounded-full font-medium">
+                    <span className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-3 py-1 rounded-full font-medium">
                       {c.name}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 p-3">
+                  <div className="flex items-center gap-2 p-2 pt-3">
                     <div className="flex-1 min-w-0">
                       <div className="font-bold truncate">{c.name}</div>
-                      <div className="text-xs text-muted-foreground truncate">ຂອງ{c.name}</div>
+                      <div className="text-xs text-muted-foreground truncate">ກົດເພື່ອເບິ່ງສິນຄ້າໃນໝວດໝູ່ນີ້</div>
                     </div>
-                    <div className="h-11 w-11 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
+                    <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                       <ShoppingBag className="h-5 w-5 text-primary" />
                     </div>
                   </div>
@@ -140,10 +142,12 @@ function Index() {
         </section>
 
         <section>
-          <h2 className="font-bold text-2xl mb-1">{activeCat ? cats.find((c) => c.id === activeCat)?.name : "ສິນຄ້າແນະນຳສຳລັບລູກຄ້າ"}</h2>
-          <div className="text-sm text-muted-foreground mb-3">ເລືອກຊື້ສິນຄ້າຍອດນິຍົມ</div>
+          <SectionTitle
+            title={activeCat ? cats.find((c) => c.id === activeCat)?.name ?? "" : "ສິນຄ້າແນະນຳສຳລັບລູກຄ້າ"}
+            subtitle="ເລືອກຊື້ສິນຄ້າຍອດນິຍົມ"
+          />
           {shownProducts.length === 0 ? (
-            <div className="text-sm text-muted-foreground glass rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມສິນຄ້າ</div>
+            <div className="text-sm text-muted-foreground card-soft rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມສິນຄ້າ</div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {shownProducts.map((p) => <ProductCard key={p.id} p={p} stock={stockMap[p.id] ?? 0} onClick={() => navigate({ to: "/product/$id", params: { id: p.id } })} />)}
@@ -153,9 +157,10 @@ function Index() {
 
         {!activeCat && (
           <section>
-            <h2 className="font-bold mb-2">ສິນຄ້າບໍລິການ</h2>
+            <SectionTitle title="ສິນຄ້າບໍລິການ" subtitle="ສິນຄ້າທີ່ຕ້ອງກรອກຂໍ້ມູນ" />
             {servicesShown.length === 0 ? (
-              <div className="text-sm text-muted-foreground glass rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມສິນຄ້າບໍລິການ</div>
+              <div className="text-sm text-muted-foreground card-soft rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມສິນຄ້າບໍລິການ</div>
+
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 {servicesShown.map((p) => <ProductCard key={p.id} p={p} stock={-1} onClick={() => navigate({ to: "/product/$id", params: { id: p.id } })} />)}
