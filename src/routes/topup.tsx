@@ -58,6 +58,8 @@ function TopupPage() {
   const nav = useNavigate();
   const { user, profile, reloadProfile, loading } = useSession();
   const [qrUrl, setQrUrl] = useState<string | null>(null);
+  const [qrOn, setQrOn] = useState(true);
+  const [cardOn, setCardOn] = useState(true);
   const [method, setMethod] = useState<Method>("menu");
   const [amount, setAmount] = useState(10000);
   const [custom, setCustom] = useState("");
@@ -70,8 +72,11 @@ function TopupPage() {
   const restoredRef = useRef(false);
 
   useEffect(() => {
-    supabase.from("site_settings").select("qr_url").eq("id", 1).maybeSingle().then(({ data }) => {
-      setQrUrl((data as { qr_url: string | null } | null)?.qr_url ?? null);
+    supabase.from("site_settings").select("qr_url,qr_enabled,card_enabled").eq("id", 1).maybeSingle().then(({ data }) => {
+      const d = data as { qr_url: string | null; qr_enabled: boolean; card_enabled: boolean } | null;
+      setQrUrl(d?.qr_url ?? null);
+      setQrOn(d?.qr_enabled ?? true);
+      setCardOn(d?.card_enabled ?? true);
     });
   }, []);
 
@@ -101,7 +106,7 @@ function TopupPage() {
         setSessionStart(null);
         setFile(null);
         setMethod("qr-amount");
-        statusDialog.error("หมดเวลา", "QR Code หมดอายุแล้ว กรุณาสร้างใหม่");
+        statusDialog.error("ໝົດເວລາ", "QR Code ໝົດອາຍຸແລ້ວ ກະລຸນາສ້າງໃໝ່");
       }
     }, 1000);
     return () => clearInterval(t);
@@ -127,22 +132,25 @@ function TopupPage() {
     setMethod("qr-amount");
   };
 
-  const submitSlip = async () => {
+  const submitSlip = async (picked?: File) => {
+    const slip = picked ?? file;
     if (!user) return;
-    if (!file) return statusDialog.error("ล้มเหลว", "กรุณาแนบรูปสลิป");
-    if (finalAmount < 1000) return statusDialog.error("ล้มเหลว", "จำนวนเงินไม่ถูกต้อง");
+    if (!slip) return statusDialog.error("ລົ້ມເຫຼວ", "ກະລຸນາແນບຮູບສະລິບ");
+    
+    if (finalAmount < 1000) return statusDialog.error("ລົ້ມເຫຼວ", "ຈຳນວນເງີນບໍ່ຖືກຕ້ອງ");
     setBusy(true);
     try {
-      const dataUrl = await fileToDataUrl(file);
+      statusDialog.loading("ລໍຖ້າບຶດໜຶ່ງ...", "ກຳລັງກວດສອບສະລິບ");
+      const dataUrl = await fileToDataUrl(slip);
       const verdict = await verifySlip({ data: { imageDataUrl: dataUrl, expectedAmount: finalAmount } });
       if (!verdict.ok) {
-        statusDialog.error("สลิปไม่ถูกต้อง", verdict.reason ?? "ไม่สามารถตรวจสอบสลิปได้");
+        statusDialog.error("ສະລິບບໍ່ຖືກຕ້ອງ", verdict.reason ?? "ບໍ່ສາມາດກວດສອບສະລິບໄດ້");
         return;
       }
 
-      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      const ext = (slip.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
       const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const up = await supabase.storage.from("slips").upload(path, file, { contentType: file.type || "image/jpeg", upsert: false });
+      const up = await supabase.storage.from("slips").upload(path, slip, { contentType: slip.type || "image/jpeg", upsert: false });
       if (up.error) throw new Error(up.error.message);
 
       const ins = await supabase.from("topups").insert({ user_id: user.id, amount: finalAmount, slip_url: path, method: "qr", status: "approved" });
@@ -157,9 +165,9 @@ function TopupPage() {
       setFile(null);
       setMethod("menu");
       reloadProfile();
-      statusDialog.success("สำเร็จ", `เติมเงินสำเร็จ +${formatKip(finalAmount)}`);
+      statusDialog.success("ສຳເລັດ", `ເຕີມເງີນສຳເລັດ +${formatKip(finalAmount)}`);
     } catch (e) {
-      statusDialog.error("ล้มเหลว", (e as Error).message);
+      statusDialog.error("ລົ້ມເຫຼວ", (e as Error).message);
     } finally { setBusy(false); }
   };
 
@@ -213,9 +221,9 @@ function TopupPage() {
         {method === "menu" && (
           <>
             <div className="text-sm text-muted-foreground">ເລືອກຊ່ອງທາງເຕີມເງີນ</div>
-            <MethodCard icon={<CreditCard className="h-6 w-6" />} title="ບັດເຕີມເງີນ (Auto)" subtitle="ຄ່າທຳນຽມ 40% • ຮັບ 6,000₭ ຕໍ່ໃບ" badge="40%" onClick={() => setMethod("card")} />
+            {cardOn && <MethodCard icon={<CreditCard className="h-6 w-6" />} title="ບັດເຕີມເງີນ (Auto)" subtitle="ຄ່າທຳນຽມ 40% • ຮັບ 6,000₭ ຕໍ່ໃບ" badge="40%" onClick={() => setMethod("card")} />}
             <MethodCard icon={<Ticket className="h-6 w-6" />} title="ໃຊ້ໂຄດເຕີມເງີນ" subtitle="ເງີນເຂົ້າກະເປົ໋າທັນທີ" onClick={() => setMethod("code")} />
-            <MethodCard icon={<QrCode className="h-6 w-6" />} title="ໂອນຜ່ານ QR Code" subtitle="ແນບສະລິບ ລໍຖ້າແອັດມິນອະນຸມັດ" onClick={() => setMethod("qr-amount")} />
+            {qrOn && <MethodCard icon={<QrCode className="h-6 w-6" />} title="ໂອນຜ່ານ QR Code" subtitle="ແນບສະລິບ ລໍຖ້າແອັດມິນອະນຸມັດ" onClick={() => setMethod("qr-amount")} />}
           </>
         )}
 
@@ -268,31 +276,28 @@ function TopupPage() {
         {method === "qr-pay" && (
           <div className="glass rounded-3xl p-5 space-y-4">
             <div className="flex items-center justify-center gap-2 rounded-2xl bg-primary/10 text-primary py-2 font-bold">
-              <Clock className="h-4 w-4" /> เหลือเวลา {mm}:{ss}
+              <Clock className="h-4 w-4" /> ເຫຼືອເວລາ {mm}:{ss}
             </div>
             <div className="text-center">
-              <div className="text-sm text-muted-foreground">จำนวนที่ต้องโอน</div>
+              <div className="text-sm text-muted-foreground">ຈຳນວນທີ່ຕ້ອງໂອນ</div>
               <div className="text-3xl font-extrabold text-primary">{formatKip(finalAmount)}</div>
-              <div className="text-xs text-muted-foreground mt-1">ผู้รับ: <b className="text-foreground">{RECIPIENT_NAME}</b></div>
+              <div className="text-xs text-muted-foreground mt-1">ຜູ້ຮັບ: <b className="text-foreground">{RECIPIENT_NAME}</b></div>
             </div>
             <div className="rounded-2xl border-2 bg-white p-4 flex items-center justify-center">
               {qrUrl ? (
                 <img src={qrUrl} alt="QR" className="w-64 h-64 object-contain" />
               ) : (
                 <div className="w-64 h-64 flex items-center justify-center text-xs text-muted-foreground border-2 border-dashed rounded-lg text-center p-4">
-                  แอดมินยังไม่ได้ตั้ง QR
+                  ແອັດມິນຍັງບໍ່ໄດ້ຕັ້ງ QR
                 </div>
               )}
             </div>
             <label className="flex items-center gap-2 border-2 border-dashed rounded-2xl p-4 cursor-pointer hover:bg-accent/50">
               <Upload className="h-5 w-5 text-primary" />
-              <span className="text-sm flex-1 truncate">{file ? file.name : "แนบรูปสลิปโอนเงิน"}</span>
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+              <span className="text-sm flex-1 truncate">{busy ? "ກຳລັງກວດສອບສະລິບ..." : file ? file.name : "ແນບຮູບສະລິບໂອນເງີນ (ກວດສອບອັດຕະໂນມັດ)"}</span>
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0] ?? null; setFile(f); if (f) submitSlip(f); }} />
             </label>
-            <Button className="w-full rounded-2xl" disabled={busy || !file} onClick={submitSlip}>
-              {busy ? "กำลังตรวจสอบสลิป..." : "ส่งสลิปเพื่อตรวจสอบ"}
-            </Button>
-            <Button variant="ghost" className="w-full rounded-2xl text-destructive" onClick={cancelQrSession}>ยกเลิกและเริ่มใหม่</Button>
+            <Button variant="ghost" className="w-full rounded-2xl text-destructive" onClick={cancelQrSession}>ຍົກເລີກ ແລະ ເລີ່ມໃໝ່</Button>
           </div>
         )}
 
