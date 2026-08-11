@@ -311,11 +311,46 @@ export type Database = {
         }
         Relationships: []
       }
+      service_fields: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          product_id: string
+          sort: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          product_id: string
+          sort?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          product_id?: string
+          sort?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_fields_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_orders: {
         Row: {
+          answers: Json
           created_at: string
           customer_note: string | null
           id: string
+          package_id: string | null
+          package_name: string | null
           price: number
           product_id: string | null
           product_name: string
@@ -323,9 +358,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          answers?: Json
           created_at?: string
           customer_note?: string | null
           id?: string
+          package_id?: string | null
+          package_name?: string | null
           price: number
           product_id?: string | null
           product_name: string
@@ -333,9 +371,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          answers?: Json
           created_at?: string
           customer_note?: string | null
           id?: string
+          package_id?: string | null
+          package_name?: string | null
           price?: number
           product_id?: string | null
           product_name?: string
@@ -344,7 +385,52 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "service_orders_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "service_packages"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "service_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_packages: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          price: number
+          product_id: string
+          sort: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          price: number
+          product_id: string
+          sort?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          price?: number
+          product_id?: string
+          sort?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_packages_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -355,33 +441,39 @@ export type Database = {
       site_settings: {
         Row: {
           announcement: string | null
+          card_enabled: boolean
           discord_webhook: string | null
           help_link: string | null
           id: number
           logo_url: string | null
           primary_color: string | null
+          qr_enabled: boolean
           qr_url: string | null
           site_name: string
           slide_url: string | null
         }
         Insert: {
           announcement?: string | null
+          card_enabled?: boolean
           discord_webhook?: string | null
           help_link?: string | null
           id?: number
           logo_url?: string | null
           primary_color?: string | null
+          qr_enabled?: boolean
           qr_url?: string | null
           site_name?: string
           slide_url?: string | null
         }
         Update: {
           announcement?: string | null
+          card_enabled?: boolean
           discord_webhook?: string | null
           help_link?: string | null
           id?: number
           logo_url?: string | null
           primary_color?: string | null
+          qr_enabled?: boolean
           qr_url?: string | null
           site_name?: string
           slide_url?: string | null
@@ -466,6 +558,10 @@ export type Database = {
       purchase_product: { Args: { _product_id: string }; Returns: Json }
       purchase_service: {
         Args: { _note: string; _product_id: string }
+        Returns: Json
+      }
+      purchase_service_package: {
+        Args: { _answers: Json; _package_id: string; _product_id: string }
         Returns: Json
       }
       redeem_code: { Args: { _code: string }; Returns: Json }
