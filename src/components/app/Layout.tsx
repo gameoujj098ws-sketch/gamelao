@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
-  Menu, Wallet, User, Clock, Wallet2, LogOut, Shield, Headphones, MessageCircle, Home,
-  Gamepad2, CreditCard, Plus, History,
+  Wallet, User, Clock, Wallet2, LogOut, Shield, Headphones, MessageCircle, Home,
+  Gamepad2, CreditCard, Plus, History, LayoutGrid,
 } from "lucide-react";
 import { formatKip } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,39 +33,37 @@ export function Header({
   );
 
   return (
-    <header className="fixed top-0 inset-x-0 z-40 bg-card/95 backdrop-blur border-b border-border h-16 px-3 flex items-center gap-2">
-      <div className="flex items-center gap-2 min-w-0 flex-1">
-        {logoUrl ? (
-          <img src={logoUrl} alt={siteName} className="h-11 w-11 rounded-full object-cover" />
-        ) : (
-          <div className="h-11 w-11 rounded-full bg-primary" />
-        )}
-        <div className="min-w-0">
-          <div className="font-extrabold truncate leading-tight">{siteName}</div>
-          <div className="text-[11px] text-muted-foreground truncate">ເຕີມເກມອອນລາຍ</div>
+    <div className="fixed top-2 inset-x-2 z-40">
+      <header className="glass rounded-[26px] h-[74px] px-3 flex items-center gap-2 shadow-lg">
+        <div className="flex items-center min-w-0 flex-1">
+          {logoUrl ? (
+            <img src={logoUrl} alt={siteName} className="h-14 w-auto max-w-[140px] object-contain" />
+          ) : (
+            <div className="h-14 w-14 rounded-2xl bg-primary" />
+          )}
         </div>
-      </div>
-      {profile ? (
-        <>
-          <div className="text-success font-extrabold text-sm whitespace-nowrap">{formatKip(profile.wallet_balance)}</div>
-          <button onClick={onProfile} className="h-9 w-9 rounded-full bg-primary/15 text-primary font-bold flex items-center justify-center shrink-0">
-            {profile.username.charAt(0).toUpperCase()}
-          </button>
-        </>
-      ) : (
-        <Button size="sm" className="rounded-full" onClick={onLogin}>ເຂົ້າສູ່ລະບົບ</Button>
-      )}
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Button size="icon" variant="ghost" className="relative rounded-full shrink-0">
-            <Menu className="h-5 w-5" />
-            {unreadMsgs > 0 && <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />}
-          </Button>
-        </SheetTrigger>
-        <SheetContent className="w-[290px] p-0 flex flex-col bg-card border-l-0 rounded-l-3xl overflow-hidden">
-          <SheetTitle className="px-5 pt-5 pb-2 text-lg font-bold">{siteName}</SheetTitle>
-          {profile ? (
-            <>
+
+        {profile ? (
+          <div className="flex items-center gap-2 bg-card rounded-[20px] pl-1.5 pr-3.5 py-1.5 shadow-sm">
+            <span className="h-11 w-11 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+              <Wallet className="h-6 w-6" />
+            </span>
+            <span className="font-extrabold text-lg whitespace-nowrap">{formatKip(profile.wallet_balance)}</span>
+          </div>
+        ) : (
+          <Button className="rounded-2xl h-11 px-5 font-bold" onClick={onLogin}>ເຂົ້າສູ່ລະບົບ</Button>
+        )}
+
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <button className="relative h-12 w-12 shrink-0 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-md active:scale-95 transition">
+              <LayoutGrid className="h-6 w-6" />
+              {unreadMsgs > 0 && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-destructive ring-2 ring-card animate-pulse" />}
+            </button>
+          </SheetTrigger>
+          <SheetContent className="w-[290px] p-0 flex flex-col bg-card border-l-0 rounded-l-3xl overflow-hidden">
+            <SheetTitle className="px-5 pt-5 pb-2 text-lg font-bold">{siteName}</SheetTitle>
+            {profile ? (
               <div className="px-2 py-1 flex-1 overflow-y-auto">
                 <MenuItem icon={<Plus className="h-5 w-5" />} label="ເຕີມເງີນ" onClick={onTopup} />
                 <MenuItem icon={<MessageCircle className="h-5 w-5" />} label="ຂໍ້ຄວາມ" onClick={onMessages} badge={unreadMsgs} />
@@ -77,27 +75,27 @@ export function Header({
                 <div className="my-1 border-t border-border" />
                 <MenuItem icon={<LogOut className="h-5 w-5" />} label="ອອກຈາກລະບົບ" danger onClick={async () => { await supabase.auth.signOut(); }} />
               </div>
-            </>
-          ) : (
-            <div className="p-4 space-y-2">
-              <Button className="w-full rounded-2xl h-11" onClick={() => { setOpen(false); onLogin(); }}>ເຂົ້າສູ່ລະບົບ / ສະໝັກ</Button>
-              {helpLink && <MenuItem icon={<Headphones className="h-5 w-5" />} label="ຕິດຕໍ່ພວກເຮົາ" onClick={() => window.open(helpLink, "_blank")} />}
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
-    </header>
+            ) : (
+              <div className="p-4 space-y-2">
+                <Button className="w-full rounded-2xl h-11" onClick={() => { setOpen(false); onLogin(); }}>ເຂົ້າສູ່ລະບົບ / ສະໝັກ</Button>
+                {helpLink && <MenuItem icon={<Headphones className="h-5 w-5" />} label="ຕິດຕໍ່ພວກເຮົາ" onClick={() => window.open(helpLink, "_blank")} />}
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
+      </header>
+    </div>
   );
 }
 
 export function BottomNav({ onTopup, onProducts, onHistory, onHelp }: { onTopup: () => void; onProducts: () => void; onHistory: () => void; onHelp: () => void }) {
   return (
     <nav className="fixed bottom-3 inset-x-3 z-40 glass rounded-3xl h-16 grid grid-cols-5 items-center px-2">
-      <NavBtn icon={<Gamepad2 className="h-5 w-5" />} label="ເຕີມເກມ" onClick={onProducts} />
-      <NavBtn icon={<Clock className="h-5 w-5" />} label="ປະຫວັດ" onClick={onHistory} />
+      <NavBtn icon={<CreditCard className="h-5 w-5" />} label="ເຕີມເງີນ" onClick={onTopup} />
+      <NavBtn icon={<Gamepad2 className="h-5 w-5" />} label="ສິນຄ້າ" onClick={onProducts} />
       <NavBtn icon={<Home className="h-6 w-6" />} label="ໜ້າຫຼັກ" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} primary />
-      <NavBtn icon={<Wallet className="h-5 w-5" />} label="ເຕີມເຄຣດິດ" onClick={onTopup} />
-      <NavBtn icon={<CreditCard className="h-5 w-5" />} label="ຊ່ວຍເຫຼືອ" onClick={onHelp} />
+      <NavBtn icon={<Clock className="h-5 w-5" />} label="ປະຫວັດ" onClick={onHistory} />
+      <NavBtn icon={<Headphones className="h-5 w-5" />} label="ຊ່ວຍເຫຼືອ" onClick={onHelp} />
     </nav>
   );
 }

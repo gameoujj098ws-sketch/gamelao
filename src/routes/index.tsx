@@ -162,7 +162,7 @@ function Index() {
 
         {!activeCat && (
           <section>
-            <SectionTitle title="ສິນຄ້າບໍລິການ" subtitle="ສິນຄ້າທີ່ຕ້ອງກรອກຂໍ້ມູນ" />
+            <SectionTitle title="ສິນຄ້າບໍລິການ" subtitle="ບໍລິການ/ອໍເດີ ເລືອກແພັກເກດທີ່ຕ້ອງການ" />
             {servicesShown.length === 0 ? (
               <div className="text-sm text-muted-foreground card-soft rounded-2xl p-4 text-center">ຍັງບໍ່ໄດ້ເພີ່ມສິນຄ້າບໍລິການ</div>
 
@@ -243,7 +243,7 @@ function ProductCard({ p, stock, onClick }: { p: Product; stock: number; onClick
           className="w-full bg-primary text-primary-foreground rounded-full py-2 flex items-center justify-center gap-1.5 font-bold text-sm active:scale-[.98] disabled:opacity-50 disabled:bg-muted disabled:text-muted-foreground"
         >
           {isService ? <Bell className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
-          {isService ? "ສັ່ງຈຳເນີ" : "ຊື້ສິນຄ້າ"}
+          {isService ? "ສັ່ງອໍເດີ" : "ຊື້ສິນຄ້າ"}
         </button>
         <div className="flex items-center justify-between text-[11px] pt-0.5">
           {isService ? (
@@ -253,7 +253,7 @@ function ProductCard({ p, stock, onClick }: { p: Product; stock: number; onClick
           ) : (
             <>
               <span className="flex items-center gap-1 font-medium">
-                <span className={`h-2 w-2 rounded-full ${available ? "bg-success" : "bg-destructive"}`} />
+                <span className={`h-2 w-2 rounded-full animate-pulse ${available ? "bg-success" : "bg-destructive"}`} />
                 <span className={available ? "text-success" : "text-destructive"}>{available ? "ພ້ອມຂາຍ" : "ໝົດ"}</span>
               </span>
               <span className="flex items-center gap-1 text-primary">
