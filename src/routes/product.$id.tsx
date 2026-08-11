@@ -85,8 +85,8 @@ function ProductPage() {
           : [{ label: p.service_field_label || "ຂໍ້ມູນ", value: note.trim() }];
         if (list.some((x) => !x.value)) throw new Error("ກະລຸນາໃສ່ຂໍ້ມູນໃຫ້ຄົບ");
         const { error } = await supabase.rpc("purchase_service_package", {
-          _product_id: p.id, _package_id: packId, _answers: list,
-        });
+          _product_id: p.id, _package_id: packId as string, _answers: list,
+        } as never);
         if (error) throw error;
         statusDialog.success("ສຳເລັດ", "ຄຳສັ່ງຊື້ຂອງທ່ານກຳລັງດຳເນີນການ ລໍຖ້າແອັດມິນ");
         setAnswers({});
