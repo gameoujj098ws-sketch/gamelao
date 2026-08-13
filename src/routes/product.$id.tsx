@@ -7,8 +7,8 @@ import { formatKip } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { StatusDialog, statusDialog } from "@/components/app/StatusDialog";
-import { BottomNav } from "@/components/app/Layout";
+import { statusDialog } from "@/components/app/StatusDialog";
+import { AppShell } from "@/components/app/AppShell";
 
 export const Route = createFileRoute("/product/$id")({
   head: () => ({
@@ -132,12 +132,12 @@ function ProductPage() {
   };
 
   return (
-    <div className="min-h-screen pt-16 pb-32 bg-background">
-      <header className="fixed top-0 inset-x-0 z-40 bg-card/95 backdrop-blur border-b border-border h-14 px-2 flex items-center gap-2">
-        <button onClick={() => navigate({ to: "/" })} className="h-10 px-3 rounded-2xl flex items-center gap-2 text-sm font-medium">
+    <AppShell>
+      <div className="max-w-md mx-auto px-3 pb-1">
+        <button onClick={() => navigate({ to: "/" })} className="h-10 px-3 rounded-2xl bg-card shadow-sm flex items-center gap-2 text-sm font-semibold active:scale-95 transition">
           <ArrowLeft className="h-5 w-5" />ກັບຄືນ
         </button>
-      </header>
+      </div>
 
       {!p ? (
         <div className="p-6 text-center text-sm text-muted-foreground">ບໍ່ພົບສິນຄ້າ</div>
@@ -265,14 +265,7 @@ function ProductPage() {
         </main>
       )}
 
-      <BottomNav
-        onTopup={() => navigate({ to: "/topup" })}
-        onProducts={() => navigate({ to: "/" })}
-        onHistory={() => navigate({ to: user ? "/history" : "/auth" })}
-        onHelp={() => navigate({ to: "/" })}
-      />
-      <StatusDialog />
-    </div>
+    </AppShell>
   );
 }
 
