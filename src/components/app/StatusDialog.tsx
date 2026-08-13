@@ -60,7 +60,7 @@ export function StatusDialog() {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !loading && statusDialog.close()}>
       <DialogContent
-        showCloseButton={false}
+        
         className="max-w-[320px] rounded-[28px] border-0 p-6 text-center shadow-2xl [&>button]:hidden"
       >
         <div className="flex flex-col items-center gap-4">
