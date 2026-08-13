@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
-import { StatusDialog } from "@/components/app/StatusDialog";
+import { AppShell } from "@/components/app/AppShell";
 
 export const Route = createFileRoute("/messages")({
   head: () => ({
@@ -41,13 +41,13 @@ function MessagesPage() {
   }, [user]);
 
   return (
-    <div className="min-h-screen pt-20 pb-10">
-      <header className="fixed top-3 inset-x-3 z-40 glass rounded-3xl h-14 px-3 flex items-center gap-2 shadow-lg">
-        <button onClick={() => navigate({ to: "/" })} className="h-10 w-10 rounded-2xl bg-white/50 dark:bg-white/10 flex items-center justify-center">
+    <AppShell>
+      <div className="max-w-md mx-auto px-3 flex items-center gap-2">
+        <button onClick={() => navigate({ to: "/" })} className="h-10 w-10 rounded-2xl bg-card shadow-sm flex items-center justify-center active:scale-95 transition">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="font-bold text-sm">ຂໍ້ຄວາມຈາກແອັດມິນ</h1>
-      </header>
+        <h1 className="text-xl font-extrabold">ຂໍ້ຄວາມຈາກແອັດມິນ</h1>
+      </div>
 
       <main className="max-w-md mx-auto p-3 space-y-2">
         {msgs.length === 0 && <div className="text-center text-sm text-muted-foreground py-8">ຍັງບໍ່ມີຂໍ້ຄວາມ</div>}
@@ -58,7 +58,6 @@ function MessagesPage() {
           </div>
         ))}
       </main>
-      <StatusDialog />
-    </div>
+    </AppShell>
   );
 }
