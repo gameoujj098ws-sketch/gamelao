@@ -600,7 +600,11 @@ function AdminSettings() {
   };
 
   return (
-    <div className="space-y-4 py-3">
+    <div className="space-y-4 py-3 relative">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b pb-2 pt-1 flex items-center justify-between">
+        <div className="font-bold text-sm">ຕັ້ງຄ່າເວັບ</div>
+        <Button size="sm" onClick={save}>ບັນທຶກຕັ້ງຄ່າ</Button>
+      </div>
       <Section title="ຊື່ເວັບ / ໂລໂກ້ / ສະໄລ້">
         <Input placeholder="ຊື່ເວັບ" value={s.site_name ?? ""} onChange={(e) => setS({ ...s, site_name: e.target.value })} />
         <Input placeholder="ລິ້ງໂລໂກ້" value={s.logo_url ?? ""} onChange={(e) => setS({ ...s, logo_url: e.target.value })} />
@@ -623,7 +627,10 @@ function AdminSettings() {
       <Section title="ຊ່ວຍເຫຼືອ / ຕິດຕໍ່ແອັດມິນ"><Input placeholder="ລິ້ງ (ເຊັ່ນ Telegram, Line)" value={s.help_link ?? ""} onChange={(e) => setS({ ...s, help_link: e.target.value })} /></Section>
       <Section title="ສີເວັບ (hex)"><Input placeholder="#7c3aed" value={s.primary_color ?? ""} onChange={(e) => setS({ ...s, primary_color: e.target.value })} /></Section>
       <Section title="Discord Webhook"><Input placeholder="https://discord.com/api/webhooks/..." value={s.discord_webhook ?? ""} onChange={(e) => setS({ ...s, discord_webhook: e.target.value })} /></Section>
-      <Button className="w-full" onClick={save}>ບັນທຶກຕັ້ງຄ່າ</Button>
+      <div className="sticky bottom-0 z-10 bg-background/95 backdrop-blur border-t py-3">
+        <Button className="w-full" onClick={save}>ບັນທຶກຕັ້ງຄ່າ</Button>
+      </div>
+
 
       <Section title="ໂຄສະນາ (Popup)">
         <Input placeholder="ລິ້ງຮູບໂຄສະນາ" value={ad.image_url} onChange={(e) => setAd({ ...ad, image_url: e.target.value })} />
