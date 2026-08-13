@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatKip } from "@/lib/format";
-import { statusDialog, StatusDialog } from "@/components/app/StatusDialog";
-import { ArrowLeft, CreditCard, Ticket, QrCode, Upload, Wallet, Clock } from "lucide-react";
+import { statusDialog } from "@/components/app/StatusDialog";
+import { ArrowLeft, CreditCard, Ticket, QrCode, Upload, Wallet, Clock, Check } from "lucide-react";
 import { verifySlip } from "@/lib/verify-slip.functions";
+import { AppShell } from "@/components/app/AppShell";
 
 const QR_SESSION_KEY = "qr_topup_session_v1";
 const QR_TTL_MS = 15 * 60 * 1000;
