@@ -18,32 +18,90 @@ type Product = {
   service_field_label: string | null; category_id: string | null; hidden_from_home: boolean;
 };
 
+type AdminTab =
+  | "stats" | "topups" | "cards" | "orders" | "services"
+  | "svcmanage" | "categories" | "products" | "users" | "settings";
+
+const ADMIN_GROUPS: { label: string; items: { value: AdminTab; label: string; dot?: "topups" | "cards" | "services" }[] }[] = [
+  { label: "ພາບລວມ", items: [{ value: "stats", label: "ສະຖິຕິ" }] },
+  {
+    label: "ອະນຸມັດ / ອໍເດີ",
+    items: [
+      { value: "topups", label: "ເຕີມເງີນ QR", dot: "topups" },
+      { value: "cards", label: "ບັດເຕີມເງີນ", dot: "cards" },
+      { value: "orders", label: "ອໍເດີສິນຄ້າ" },
+      { value: "services", label: "ອໍເດີບໍລິການ", dot: "services" },
+    ],
+  },
+  {
+    label: "ຈັດການສິນຄ້າ",
+    items: [
+      { value: "categories", label: "ໝວດໝູ່" },
+      { value: "products", label: "ສິນຄ້າທົ່ວໄປ" },
+      { value: "svcmanage", label: "ສິນຄ້າບໍລິການ" },
+    ],
+  },
+  { label: "ລະບົບ", items: [{ value: "users", label: "ຜູ້ໃຊ້" }, { value: "settings", label: "ຕັ້ງຄ່າເວັບ" }] },
+];
+
 export function AdminPanel() {
+  const [tab, setTab] = useState<AdminTab>("stats");
+  const [pending, setPending] = useState({ topups: 0, cards: 0, services: 0 });
+
+  useEffect(() => {
+    const load = async () => {
+      const count = async (table: "topups" | "card_topups" | "service_orders") =>
+        (await supabase.from(table).select("*", { count: "exact", head: true }).eq("status", "pending")).count ?? 0;
+      setPending({ topups: await count("topups"), cards: await count("card_topups"), services: await count("service_orders") });
+    };
+    load();
+    const t = setInterval(load, 20000);
+    return () => clearInterval(t);
+  }, [tab]);
+
   return (
-    <Tabs defaultValue="stats" className="w-full">
-      <TabsList className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-10 w-full h-auto">
-        <TabsTrigger value="stats">ສະຖິຕິ</TabsTrigger>
-        <TabsTrigger value="topups">ເງີນQR</TabsTrigger>
-        <TabsTrigger value="cards">ບັດ</TabsTrigger>
-        <TabsTrigger value="orders">ອໍເດີ</TabsTrigger>
-        <TabsTrigger value="services">ອໍເດີບໍລິການ</TabsTrigger>
-        <TabsTrigger value="svcmanage">ຈັດການບໍລິການ</TabsTrigger>
-        <TabsTrigger value="categories">ໝວດ</TabsTrigger>
-        <TabsTrigger value="products">ສິນຄ້າ</TabsTrigger>
-        <TabsTrigger value="users">ຜູ້ໃຊ້</TabsTrigger>
-        <TabsTrigger value="settings">ຕັ້ງຄ່າ</TabsTrigger>
-      </TabsList>
-      <TabsContent value="stats"><AdminStats /></TabsContent>
-      <TabsContent value="topups"><AdminTopups /></TabsContent>
-      <TabsContent value="cards"><AdminCards /></TabsContent>
-      <TabsContent value="orders"><AdminOrders /></TabsContent>
-      <TabsContent value="services"><AdminServices /></TabsContent>
-      <TabsContent value="svcmanage"><AdminServiceProducts /></TabsContent>
-      <TabsContent value="categories"><AdminCategories /></TabsContent>
-      <TabsContent value="products"><AdminProducts /></TabsContent>
-      <TabsContent value="users"><AdminUsers /></TabsContent>
-      <TabsContent value="settings"><AdminSettings /></TabsContent>
-    </Tabs>
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {ADMIN_GROUPS.map((g) => (
+          <div key={g.label} className="rounded-2xl bg-card shadow-sm p-3">
+            <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-2">{g.label}</div>
+            <div className="space-y-1.5">
+              {g.items.map((it) => {
+                const active = tab === it.value;
+                const badge = it.dot ? pending[it.dot] : 0;
+                return (
+                  <button
+                    key={it.value}
+                    onClick={() => setTab(it.value)}
+                    className={`w-full flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition text-left ${active ? "bg-primary text-primary-foreground shadow" : "hover:bg-accent"}`}
+                  >
+                    <span className="flex-1 truncate">{it.label}</span>
+                    {badge > 0 && (
+                      <span className="shrink-0 min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[11px] font-bold flex items-center justify-center animate-pulse">
+                        {badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-2xl bg-card shadow-sm p-3">
+        {tab === "stats" && <AdminStats />}
+        {tab === "topups" && <AdminTopups />}
+        {tab === "cards" && <AdminCards />}
+        {tab === "orders" && <AdminOrders />}
+        {tab === "services" && <AdminServices />}
+        {tab === "svcmanage" && <AdminServiceProducts />}
+        {tab === "categories" && <AdminCategories />}
+        {tab === "products" && <AdminProducts />}
+        {tab === "users" && <AdminUsers />}
+        {tab === "settings" && <AdminSettings />}
+      </div>
+    </div>
   );
 }
 
