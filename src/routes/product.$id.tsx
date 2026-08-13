@@ -75,6 +75,12 @@ function ProductPage() {
   const buy = async () => {
     if (!p) return;
     if (!user) return navigate({ to: "/auth" });
+    const total = unitPrice * (p.is_service ? 1 : qty);
+    const ok = await statusDialog.confirm(
+      "ຢືນຢັນການສັ່ງຊື້",
+      `${p.name}${selectedPack ? ` (${selectedPack.name})` : ""}\nລວມທັງໝົດ ${formatKip(total)}`,
+    );
+    if (!ok) return;
     setLoading(true);
     statusDialog.loading("ລໍຖ້າບຶດໜຶ່ງ...", "ກຳລັງດຳເນີນການ");
     try {
