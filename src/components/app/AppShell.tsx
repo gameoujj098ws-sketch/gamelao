@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
 import { Header, BottomNav } from "@/components/app/Layout";
 import { StatusDialog, statusDialog } from "@/components/app/StatusDialog";
+import { themeVars } from "@/lib/theme";
+
 
 export type ShellSettings = {
   site_name: string;
