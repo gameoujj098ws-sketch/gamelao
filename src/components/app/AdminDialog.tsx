@@ -105,13 +105,36 @@ export function AdminPanel() {
   );
 }
 
+/** Load username/email for a list of user ids (no FK embed available on these tables). */
+async function loadProfiles(ids: string[]) {
+  const uniq = [...new Set(ids)].filter(Boolean);
+  if (uniq.length === 0) return {} as Record<string, { username: string; email: string }>;
+  const { data } = await supabase.from("profiles").select("id,username,email").in("id", uniq);
+  return Object.fromEntries((data ?? []).map((p) => [p.id, { username: p.username, email: p.email }]));
+}
+
+const ST_TEXT: Record<string, string> = { pending: "ລໍຖ້າ", approved: "ສຳເລັດ", rejected: "ປະຕິເສດ", success: "ສຳເລັດ" };
+function StatusChip({ status }: { status: string }) {
+  const cls = status === "approved" || status === "success"
+    ? "bg-[color:var(--color-success)]/15 text-[color:var(--color-success)]"
+    : status === "rejected" ? "bg-destructive/15 text-destructive" : "bg-primary/10 text-primary";
+  return <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${cls}`}>{ST_TEXT[status] ?? status}</span>;
+}
+
 function AdminCards() {
-  const [rows, setRows] = useState<{ id: string; card_code: string; net_amount: number; status: string; created_at: string; profiles: { username: string; email: string } | null }[]>([]);
+  type Row = { id: string; user_id: string; card_code: string; net_amount: number; status: string; created_at: string; note: string | null };
+  const [rows, setRows] = useState<Row[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, { username: string; email: string }>>({});
+  const [onlyPending, setOnlyPending] = useState(true);
   const load = async () => {
-    const { data } = await supabase.from("card_topups").select("*, profiles(username,email)").eq("status", "pending").order("created_at");
-    setRows(data as never ?? []);
+    let q = supabase.from("card_topups").select("*").order("created_at", { ascending: false }).limit(100);
+    if (onlyPending) q = supabase.from("card_topups").select("*").eq("status", "pending").order("created_at");
+    const { data } = await q;
+    const list = (data as never as Row[]) ?? [];
+    setRows(list);
+    setProfiles(await loadProfiles(list.map((r) => r.user_id)));
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [onlyPending]);
   const act = async (id: string, ok: boolean) => {
     const { error } = await supabase.rpc(ok ? "approve_card_topup" : "reject_card_topup", { _id: id });
     if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
@@ -120,21 +143,32 @@ function AdminCards() {
   };
   return (
     <div className="space-y-2 py-3">
-      {rows.length === 0 && <div className="text-center text-sm text-muted-foreground py-6">ບໍ່ມີບັດລໍຖ້າ</div>}
+      <div className="flex gap-2">
+        <Button size="sm" variant={onlyPending ? "default" : "outline"} onClick={() => setOnlyPending(true)}>ລໍຖ້າອະນຸມັດ</Button>
+        <Button size="sm" variant={!onlyPending ? "default" : "outline"} onClick={() => setOnlyPending(false)}>ປະຫວັດທັງໝົດ</Button>
+      </div>
+      {rows.length === 0 && <div className="text-center text-sm text-muted-foreground py-6">ບໍ່ມີບັດ</div>}
       {rows.map((r) => (
-        <div key={r.id} className="border rounded-lg p-3 text-sm">
-          <div className="font-semibold">{r.profiles?.username} <span className="text-xs text-muted-foreground">({r.profiles?.email})</span></div>
+        <div key={r.id} className="border rounded-xl p-3 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="font-semibold flex-1 truncate">{profiles[r.user_id]?.username ?? "-"} <span className="text-xs text-muted-foreground">({profiles[r.user_id]?.email ?? "-"})</span></div>
+            <StatusChip status={r.status} />
+          </div>
           <div className="font-mono text-xs bg-muted p-2 rounded mt-1 cursor-pointer" onClick={() => { navigator.clipboard.writeText(r.card_code); statusDialog.success("ຄັດລອກແລ້ວ", ""); }}>{r.card_code}</div>
           <div className="text-xs text-muted-foreground mt-1">{new Date(r.created_at).toLocaleString()} · ຮັບຈິງ {formatKip(r.net_amount)}</div>
-          <div className="flex gap-2 mt-2">
-            <Button size="sm" onClick={() => act(r.id, true)}><Check className="h-4 w-4" />ອະນຸມັດ</Button>
-            <Button size="sm" variant="destructive" onClick={() => act(r.id, false)}><X className="h-4 w-4" />ປະຕິເສດ</Button>
-          </div>
+          {r.note && <div className="text-xs mt-1">ໝາຍເຫດ: {r.note}</div>}
+          {r.status === "pending" && (
+            <div className="flex gap-2 mt-2">
+              <Button size="sm" onClick={() => act(r.id, true)}><Check className="h-4 w-4" />ອະນຸມັດ</Button>
+              <Button size="sm" variant="destructive" onClick={() => act(r.id, false)}><X className="h-4 w-4" />ປະຕິເສດ</Button>
+            </div>
+          )}
         </div>
       ))}
     </div>
   );
 }
+
 
 function AdminStats() {
   const [s, setS] = useState({ members: 0, visits: 0, revenue: 0, monthRevenue: 0, orderCount: 0 });
@@ -170,19 +204,28 @@ function Stat({ label, value }: { label: string; value: number | string }) {
 }
 
 function AdminTopups() {
-  const [rows, setRows] = useState<{ id: string; user_id: string; amount: number; slip_url: string; status: string; created_at: string; profiles: { username: string; email: string } | null }[]>([]);
+  type Row = { id: string; user_id: string; amount: number; slip_url: string | null; status: string; created_at: string; note: string | null };
+  const [rows, setRows] = useState<Row[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, { username: string; email: string }>>({});
   const [slipUrls, setSlipUrls] = useState<Record<string, string>>({});
+  const [onlyPending, setOnlyPending] = useState(false);
   const load = async () => {
-    const { data } = await supabase.from("topups").select("*, profiles(username,email)").eq("status", "pending").order("created_at");
-    setRows(data as never ?? []);
+    const base = supabase.from("topups").select("*").eq("method", "qr");
+    const { data } = onlyPending
+      ? await base.eq("status", "pending").order("created_at")
+      : await base.order("created_at", { ascending: false }).limit(60);
+    const list = (data as never as Row[]) ?? [];
+    setRows(list);
+    setProfiles(await loadProfiles(list.map((r) => r.user_id)));
     const urls: Record<string, string> = {};
-    for (const r of data ?? []) {
-      const { data: sig } = await supabase.storage.from("slips").createSignedUrl(r.slip_url ?? "", 3600);
+    for (const r of list) {
+      if (!r.slip_url) continue;
+      const { data: sig } = await supabase.storage.from("slips").createSignedUrl(r.slip_url, 3600);
       if (sig) urls[r.id] = sig.signedUrl;
     }
     setSlipUrls(urls);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [onlyPending]);
   const act = async (id: string, ok: boolean) => {
     const { error } = await supabase.rpc(ok ? "approve_topup" : "reject_topup", { _topup_id: id });
     if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
@@ -191,24 +234,35 @@ function AdminTopups() {
   };
   return (
     <div className="space-y-2 py-3">
-      {rows.length === 0 && <div className="text-center text-sm text-muted-foreground py-6">ບໍ່ມີລາຍການລໍຖ້າ</div>}
+      <div className="flex gap-2">
+        <Button size="sm" variant={!onlyPending ? "default" : "outline"} onClick={() => setOnlyPending(false)}>ປະຫວັດທັງໝົດ</Button>
+        <Button size="sm" variant={onlyPending ? "default" : "outline"} onClick={() => setOnlyPending(true)}>ລໍຖ້າອະນຸມັດ</Button>
+      </div>
+      {rows.length === 0 && <div className="text-center text-sm text-muted-foreground py-6">ບໍ່ມີລາຍການ</div>}
       {rows.map((r) => (
-        <div key={r.id} className="border rounded-lg p-3 flex gap-3 items-start">
-          {slipUrls[r.id] && <a href={slipUrls[r.id]} target="_blank" rel="noopener noreferrer"><img src={slipUrls[r.id]} alt="slip" className="w-20 h-20 object-cover rounded" /></a>}
-          <div className="flex-1 text-sm">
-            <div className="font-semibold">{r.profiles?.username} <span className="text-xs text-muted-foreground">({r.profiles?.email})</span></div>
+        <div key={r.id} className="border rounded-xl p-3 flex gap-3 items-start">
+          {slipUrls[r.id] && <a href={slipUrls[r.id]} target="_blank" rel="noopener noreferrer"><img src={slipUrls[r.id]} alt="slip" className="w-20 h-20 object-cover rounded-lg" /></a>}
+          <div className="flex-1 text-sm min-w-0">
+            <div className="flex items-center gap-2">
+              <div className="font-semibold flex-1 truncate">{profiles[r.user_id]?.username ?? "-"} <span className="text-xs text-muted-foreground">({profiles[r.user_id]?.email ?? "-"})</span></div>
+              <StatusChip status={r.status} />
+            </div>
             <div>{formatKip(r.amount)}</div>
             <div className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</div>
-            <div className="flex gap-2 mt-2">
-              <Button size="sm" onClick={() => act(r.id, true)}><Check className="h-4 w-4" />ອະນຸມັດ</Button>
-              <Button size="sm" variant="destructive" onClick={() => act(r.id, false)}><X className="h-4 w-4" />ປະຕິເສດ</Button>
-            </div>
+            {r.note && <div className="text-xs mt-1">ເຫດຜົນ: {r.note}</div>}
+            {r.status === "pending" && (
+              <div className="flex gap-2 mt-2">
+                <Button size="sm" onClick={() => act(r.id, true)}><Check className="h-4 w-4" />ອະນຸມັດ</Button>
+                <Button size="sm" variant="destructive" onClick={() => act(r.id, false)}><X className="h-4 w-4" />ປະຕິເສດ</Button>
+              </div>
+            )}
           </div>
         </div>
       ))}
     </div>
   );
 }
+
 
 function AdminOrders() {
   const [rows, setRows] = useState<{ id: string; product_name: string; price: number; game_data: string | null; created_at: string; profiles: { username: string } | null }[]>([]);
