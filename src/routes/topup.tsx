@@ -141,40 +141,52 @@ function TopupPage() {
     const slip = picked ?? file;
     if (!user) return;
     if (!slip) return statusDialog.error("ລົ້ມເຫຼວ", "ກະລຸນາແນບຮູບສະລິບ");
-    
+
     if (finalAmount < 1000) return statusDialog.error("ລົ້ມເຫຼວ", "ຈຳນວນເງີນບໍ່ຖືກຕ້ອງ");
     setBusy(true);
+    /** one attempt per QR session: always close the session afterwards */
+    const finish = () => {
+      clearQrSession();
+      setSessionStart(null);
+      setFile(null);
+      setMethod("menu");
+    };
     try {
       statusDialog.loading("ລໍຖ້າບຶດໜຶ່ງ...", "ກຳລັງກວດສອບສະລິບ");
       const dataUrl = await fileToDataUrl(slip);
       const verdict = await verifySlip({ data: { imageDataUrl: dataUrl, expectedAmount: finalAmount } });
-      if (!verdict.ok) {
-        statusDialog.error("ສະລິບບໍ່ຖືກຕ້ອງ", verdict.reason ?? "ບໍ່ສາມາດກວດສອບສະລິບໄດ້");
-        return;
-      }
 
       const ext = (slip.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
       const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const up = await supabase.storage.from("slips").upload(path, slip, { contentType: slip.type || "image/jpeg", upsert: false });
       if (up.error) throw new Error(up.error.message);
 
-      const ins = await supabase.from("topups").insert({ user_id: user.id, amount: finalAmount, slip_url: path, method: "qr", status: "approved" });
+      const reason = verdict.reason ?? (verdict.ok ? "ກວດສອບຜ່ານອັດຕະໂນມັດ" : "ບໍ່ສາມາດກວດສອບສະລິບໄດ້");
+      const ins = await supabase.from("topups").insert({
+        user_id: user.id, amount: finalAmount, slip_url: path, method: "qr",
+        status: verdict.ok ? "approved" : "rejected", note: reason,
+      });
       if (ins.error) throw new Error(ins.error.message);
+
+      if (!verdict.ok) {
+        finish();
+        statusDialog.error("ສະລິບບໍ່ຖືກຕ້ອງ", reason);
+        return;
+      }
 
       if (profile) {
         await supabase.from("profiles").update({ wallet_balance: (profile.wallet_balance ?? 0) + finalAmount }).eq("id", user.id);
       }
 
-      clearQrSession();
-      setSessionStart(null);
-      setFile(null);
-      setMethod("menu");
+      finish();
       reloadProfile();
       statusDialog.success("ສຳເລັດ", `ເຕີມເງີນສຳເລັດ +${formatKip(finalAmount)}`);
     } catch (e) {
+      finish();
       statusDialog.error("ລົ້ມເຫຼວ", (e as Error).message);
     } finally { setBusy(false); }
   };
+
 
 
   const submitCode = async () => {
