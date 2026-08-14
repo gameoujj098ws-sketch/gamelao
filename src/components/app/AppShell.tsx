@@ -66,8 +66,9 @@ export function AppShell({
   return (
     <div
       className="min-h-screen pt-[92px] pb-28"
-      style={settings?.primary_color ? ({ ["--primary" as string]: settings.primary_color } as React.CSSProperties) : undefined}
+      style={themeVars(settings?.primary_color)}
     >
+
       <Header
         siteName={settings?.site_name || "Game Lao"}
         logoUrl={settings?.logo_url}
