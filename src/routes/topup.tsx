@@ -235,9 +235,10 @@ function TopupPage() {
               <div className="text-3xl font-extrabold mt-1">{formatKip(profile?.wallet_balance ?? 0)}</div>
             </div>
             <div className="text-sm font-semibold text-muted-foreground">ເລືອກຊ່ອງທາງເຕີມເງີນ</div>
-            {cardOn && <MethodCard icon={<CreditCard className="h-6 w-6" />} title="ບັດເຕີມເງີນ" subtitle="ໜຶ່ງໃບ 10,000₭ • ຮັບ 6,000₭" badge="ຄ່າທຳນຽມ 40%" onClick={() => setMethod("card")} />}
-            <MethodCard icon={<Ticket className="h-6 w-6" />} title="ໃຊ້ໂຄດເຕີມເງີນ" subtitle="ເງີນເຂົ້າກະເປົ໋າທັນທີ" badge="ທັນທີ" onClick={() => setMethod("code")} />
-            {qrOn && <MethodCard icon={<QrCode className="h-6 w-6" />} title="ໂອນຜ່ານ QR Code" subtitle="ແນບສະລິບ ກວດສອບອັດຕະໂນມັດ" badge="Auto" onClick={() => setMethod("qr-amount")} />}
+            {cardOn && <MethodCard iconUrl={cardIcon.url} title="ບັດເຕີມເງີນ" subtitle="ໜຶ່ງໃບ 10,000₭ • ຮັບ 6,000₭" badge="ຄ່າທຳນຽມ 40%" onClick={() => setMethod("card")} />}
+            <MethodCard iconUrl={codeIcon.url} title="ໃຊ້ໂຄດເຕີມເງີນ" subtitle="ເງີນເຂົ້າກະເປົ໋າທັນທີ" badge="ທັນທີ" onClick={() => setMethod("code")} />
+            {qrOn && <MethodCard iconUrl={qrIcon.url} title="ໂອນຜ່ານ QR Code" subtitle="ແນບສະລິບ ກວດສອບອັດຕະໂນມັດ" badge="Auto" onClick={() => setMethod("qr-amount")} />}
+
           </>
         )}
 
@@ -346,10 +347,12 @@ function TopupPage() {
   );
 }
 
-function MethodCard({ icon, title, subtitle, onClick, badge }: { icon: React.ReactNode; title: string; subtitle: string; onClick: () => void; badge?: string }) {
+function MethodCard({ iconUrl, title, subtitle, onClick, badge }: { iconUrl: string; title: string; subtitle: string; onClick: () => void; badge?: string }) {
   return (
     <button onClick={onClick} className="w-full rounded-3xl bg-card shadow-md p-4 flex items-center gap-3 text-left active:scale-[.98] transition hover:shadow-lg">
-      <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">{icon}</div>
+      <div className="h-12 w-12 rounded-2xl bg-muted overflow-hidden flex items-center justify-center shrink-0">
+        <img src={iconUrl} alt={title} className="h-full w-full object-cover" />
+      </div>
       <div className="flex-1 min-w-0">
         <div className="font-bold">{title}</div>
         <div className="text-xs text-muted-foreground truncate">{subtitle}</div>
@@ -358,3 +361,4 @@ function MethodCard({ icon, title, subtitle, onClick, badge }: { icon: React.Rea
     </button>
   );
 }
+
