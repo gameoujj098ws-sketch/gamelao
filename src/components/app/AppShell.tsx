@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
 import { Header, BottomNav } from "@/components/app/Layout";
 import { StatusDialog, statusDialog } from "@/components/app/StatusDialog";
+import { themeVars } from "@/lib/theme";
+
 
 export type ShellSettings = {
   site_name: string;
@@ -26,13 +28,21 @@ export function AppShell({
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
-    supabase
-      .from("site_settings")
-      .select("site_name,logo_url,help_link,primary_color")
-      .eq("id", 1)
-      .maybeSingle()
-      .then(({ data }) => setSettings(data as ShellSettings));
+    const load = () =>
+      supabase
+        .from("site_settings")
+        .select("site_name,logo_url,help_link,primary_color")
+        .eq("id", 1)
+        .maybeSingle()
+        .then(({ data }) => setSettings(data as ShellSettings));
+    load();
+    const ch = supabase
+      .channel("shell-settings")
+      .on("postgres_changes", { event: "*", schema: "public", table: "site_settings" }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
   }, []);
+
 
   useEffect(() => {
     if (!user) { setUnread(0); return; }
@@ -58,8 +68,9 @@ export function AppShell({
   return (
     <div
       className="min-h-screen pt-[92px] pb-28"
-      style={settings?.primary_color ? ({ ["--primary" as string]: settings.primary_color } as React.CSSProperties) : undefined}
+      style={themeVars(settings?.primary_color)}
     >
+
       <Header
         siteName={settings?.site_name || "Game Lao"}
         logoUrl={settings?.logo_url}

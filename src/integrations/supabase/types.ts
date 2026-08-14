@@ -45,6 +45,7 @@ export type Database = {
           gross_amount: number
           id: string
           net_amount: number
+          note: string | null
           status: string
           user_id: string
         }
@@ -54,6 +55,7 @@ export type Database = {
           gross_amount?: number
           id?: string
           net_amount?: number
+          note?: string | null
           status?: string
           user_id: string
         }
@@ -63,6 +65,7 @@ export type Database = {
           gross_amount?: number
           id?: string
           net_amount?: number
+          note?: string | null
           status?: string
           user_id?: string
         }
@@ -486,6 +489,7 @@ export type Database = {
           created_at: string
           id: string
           method: string
+          note: string | null
           slip_url: string | null
           status: string
           user_id: string
@@ -495,6 +499,7 @@ export type Database = {
           created_at?: string
           id?: string
           method?: string
+          note?: string | null
           slip_url?: string | null
           status?: string
           user_id: string
@@ -504,6 +509,7 @@ export type Database = {
           created_at?: string
           id?: string
           method?: string
+          note?: string | null
           slip_url?: string | null
           status?: string
           user_id?: string

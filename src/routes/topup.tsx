@@ -7,9 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatKip } from "@/lib/format";
 import { statusDialog } from "@/components/app/StatusDialog";
-import { ArrowLeft, CreditCard, Ticket, QrCode, Upload, Wallet, Clock, Check } from "lucide-react";
+import { ArrowLeft, Wallet, Clock, Check, Upload } from "lucide-react";
 import { verifySlip } from "@/lib/verify-slip.functions";
 import { AppShell } from "@/components/app/AppShell";
+import cardIcon from "@/assets/topup-card.png.asset.json";
+import codeIcon from "@/assets/topup-code.png.asset.json";
+import qrIcon from "@/assets/topup-qr.png.asset.json";
+
 
 const QR_SESSION_KEY = "qr_topup_session_v1";
 const QR_TTL_MS = 15 * 60 * 1000;
@@ -137,40 +141,52 @@ function TopupPage() {
     const slip = picked ?? file;
     if (!user) return;
     if (!slip) return statusDialog.error("ລົ້ມເຫຼວ", "ກະລຸນາແນບຮູບສະລິບ");
-    
+
     if (finalAmount < 1000) return statusDialog.error("ລົ້ມເຫຼວ", "ຈຳນວນເງີນບໍ່ຖືກຕ້ອງ");
     setBusy(true);
+    /** one attempt per QR session: always close the session afterwards */
+    const finish = () => {
+      clearQrSession();
+      setSessionStart(null);
+      setFile(null);
+      setMethod("menu");
+    };
     try {
       statusDialog.loading("ລໍຖ້າບຶດໜຶ່ງ...", "ກຳລັງກວດສອບສະລິບ");
       const dataUrl = await fileToDataUrl(slip);
       const verdict = await verifySlip({ data: { imageDataUrl: dataUrl, expectedAmount: finalAmount } });
-      if (!verdict.ok) {
-        statusDialog.error("ສະລິບບໍ່ຖືກຕ້ອງ", verdict.reason ?? "ບໍ່ສາມາດກວດສອບສະລິບໄດ້");
-        return;
-      }
 
       const ext = (slip.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
       const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const up = await supabase.storage.from("slips").upload(path, slip, { contentType: slip.type || "image/jpeg", upsert: false });
       if (up.error) throw new Error(up.error.message);
 
-      const ins = await supabase.from("topups").insert({ user_id: user.id, amount: finalAmount, slip_url: path, method: "qr", status: "approved" });
+      const reason = verdict.reason ?? (verdict.ok ? "ກວດສອບຜ່ານອັດຕະໂນມັດ" : "ບໍ່ສາມາດກວດສອບສະລິບໄດ້");
+      const ins = await supabase.from("topups").insert({
+        user_id: user.id, amount: finalAmount, slip_url: path, method: "qr",
+        status: verdict.ok ? "approved" : "rejected", note: reason,
+      });
       if (ins.error) throw new Error(ins.error.message);
+
+      if (!verdict.ok) {
+        finish();
+        statusDialog.error("ສະລິບບໍ່ຖືກຕ້ອງ", reason);
+        return;
+      }
 
       if (profile) {
         await supabase.from("profiles").update({ wallet_balance: (profile.wallet_balance ?? 0) + finalAmount }).eq("id", user.id);
       }
 
-      clearQrSession();
-      setSessionStart(null);
-      setFile(null);
-      setMethod("menu");
+      finish();
       reloadProfile();
       statusDialog.success("ສຳເລັດ", `ເຕີມເງີນສຳເລັດ +${formatKip(finalAmount)}`);
     } catch (e) {
+      finish();
       statusDialog.error("ລົ້ມເຫຼວ", (e as Error).message);
     } finally { setBusy(false); }
   };
+
 
 
   const submitCode = async () => {
@@ -231,9 +247,10 @@ function TopupPage() {
               <div className="text-3xl font-extrabold mt-1">{formatKip(profile?.wallet_balance ?? 0)}</div>
             </div>
             <div className="text-sm font-semibold text-muted-foreground">ເລືອກຊ່ອງທາງເຕີມເງີນ</div>
-            {cardOn && <MethodCard icon={<CreditCard className="h-6 w-6" />} title="ບັດເຕີມເງີນ" subtitle="ໜຶ່ງໃບ 10,000₭ • ຮັບ 6,000₭" badge="ຄ່າທຳນຽມ 40%" onClick={() => setMethod("card")} />}
-            <MethodCard icon={<Ticket className="h-6 w-6" />} title="ໃຊ້ໂຄດເຕີມເງີນ" subtitle="ເງີນເຂົ້າກະເປົ໋າທັນທີ" badge="ທັນທີ" onClick={() => setMethod("code")} />
-            {qrOn && <MethodCard icon={<QrCode className="h-6 w-6" />} title="ໂອນຜ່ານ QR Code" subtitle="ແນບສະລິບ ກວດສອບອັດຕະໂນມັດ" badge="Auto" onClick={() => setMethod("qr-amount")} />}
+            {cardOn && <MethodCard iconUrl={cardIcon.url} title="ບັດເຕີມເງີນ" subtitle="ໜຶ່ງໃບ 10,000₭ • ຮັບ 6,000₭" badge="ຄ່າທຳນຽມ 40%" onClick={() => setMethod("card")} />}
+            <MethodCard iconUrl={codeIcon.url} title="ໃຊ້ໂຄດເຕີມເງີນ" subtitle="ເງີນເຂົ້າກະເປົ໋າທັນທີ" badge="ທັນທີ" onClick={() => setMethod("code")} />
+            {qrOn && <MethodCard iconUrl={qrIcon.url} title="ໂອນຜ່ານ QR Code" subtitle="ແນບສະລິບ ກວດສອບອັດຕະໂນມັດ" badge="Auto" onClick={() => setMethod("qr-amount")} />}
+
           </>
         )}
 
@@ -342,10 +359,12 @@ function TopupPage() {
   );
 }
 
-function MethodCard({ icon, title, subtitle, onClick, badge }: { icon: React.ReactNode; title: string; subtitle: string; onClick: () => void; badge?: string }) {
+function MethodCard({ iconUrl, title, subtitle, onClick, badge }: { iconUrl: string; title: string; subtitle: string; onClick: () => void; badge?: string }) {
   return (
     <button onClick={onClick} className="w-full rounded-3xl bg-card shadow-md p-4 flex items-center gap-3 text-left active:scale-[.98] transition hover:shadow-lg">
-      <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">{icon}</div>
+      <div className="h-12 w-12 rounded-2xl bg-muted overflow-hidden flex items-center justify-center shrink-0">
+        <img src={iconUrl} alt={title} className="h-full w-full object-cover" />
+      </div>
       <div className="flex-1 min-w-0">
         <div className="font-bold">{title}</div>
         <div className="text-xs text-muted-foreground truncate">{subtitle}</div>
@@ -354,3 +373,4 @@ function MethodCard({ icon, title, subtitle, onClick, badge }: { icon: React.Rea
     </button>
   );
 }
+
