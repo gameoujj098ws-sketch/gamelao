@@ -26,13 +26,21 @@ export function AppShell({
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
-    supabase
-      .from("site_settings")
-      .select("site_name,logo_url,help_link,primary_color")
-      .eq("id", 1)
-      .maybeSingle()
-      .then(({ data }) => setSettings(data as ShellSettings));
+    const load = () =>
+      supabase
+        .from("site_settings")
+        .select("site_name,logo_url,help_link,primary_color")
+        .eq("id", 1)
+        .maybeSingle()
+        .then(({ data }) => setSettings(data as ShellSettings));
+    load();
+    const ch = supabase
+      .channel("shell-settings")
+      .on("postgres_changes", { event: "*", schema: "public", table: "site_settings" }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
   }, []);
+
 
   useEffect(() => {
     if (!user) { setUnread(0); return; }
