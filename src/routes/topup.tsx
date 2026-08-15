@@ -117,7 +117,7 @@ function TopupPage() {
     return () => clearInterval(t);
   }, [method, sessionStart]);
 
-  const finalAmount = sessionStart ? amount : (custom ? parseInt(custom) || 0 : amount);
+  const finalAmount = sessionStart ? amount : (parseInt(custom) || 0);
   const remainingMs = sessionStart ? Math.max(0, QR_TTL_MS - (now - sessionStart)) : QR_TTL_MS;
   const mm = String(Math.floor(remainingMs / 60000)).padStart(2, "0");
   const ss = String(Math.floor((remainingMs % 60000) / 1000)).padStart(2, "0");
