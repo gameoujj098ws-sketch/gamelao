@@ -92,7 +92,7 @@ function Index() {
       />
 
       <main className="max-w-3xl mx-auto p-3 space-y-4">
-        <div className="border-2 border-dashed border-primary/40 rounded-3xl aspect-[16/8] flex items-center justify-center bg-card/60 backdrop-blur">
+        <div className={`rounded-3xl aspect-[16/8] flex items-center justify-center overflow-hidden ${settings?.slide_url ? "" : "border-2 border-dashed border-primary/40 bg-card/60 backdrop-blur"}`}>
           {settings?.slide_url ? (
             <img src={settings.slide_url} alt="" className="w-full h-full object-cover rounded-3xl" />
           ) : (
