@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { statusDialog } from "./StatusDialog";
 import { formatKip } from "@/lib/format";
 import { Eye, Plus, Pencil, Trash2, Check, X, Send } from "lucide-react";
+import { THEME_PRESETS } from "@/lib/theme";
+
 
 type Category = { id: string; name: string; image_url: string | null; sort: number };
 type Product = {
@@ -697,6 +699,13 @@ function AdminSettings() {
     if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
     statusDialog.success("ບັນທຶກແລ້ວ", "");
   };
+  /** Save the chosen color right away so every open page re-themes live. */
+  const applyColor = async (hex: string) => {
+    setS((prev) => ({ ...prev, primary_color: hex }));
+    const { error } = await supabase.from("site_settings").update({ primary_color: hex }).eq("id", 1);
+    if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
+  };
+
   const addAd = async () => {
     if (!ad.image_url) return;
     await supabase.from("ads").update({ active: false }).eq("active", true);
@@ -737,7 +746,25 @@ function AdminSettings() {
       </Section>
       <Section title="QR Code ເຕີມເງີນ"><Input placeholder="ລິ້ງຮູບ QR" value={s.qr_url ?? ""} onChange={(e) => setS({ ...s, qr_url: e.target.value })} /></Section>
       <Section title="ຊ່ວຍເຫຼືອ / ຕິດຕໍ່ແອັດມິນ"><Input placeholder="ລິ້ງ (ເຊັ່ນ Telegram, Line)" value={s.help_link ?? ""} onChange={(e) => setS({ ...s, help_link: e.target.value })} /></Section>
-      <Section title="ສີເວັບ (hex)"><Input placeholder="#7c3aed" value={s.primary_color ?? ""} onChange={(e) => setS({ ...s, primary_color: e.target.value })} /></Section>
+      <Section title="ສີເວັບ (ປ່ຽນທັນທີທັງເວັບ)">
+        <div className="grid grid-cols-3 gap-2">
+          {THEME_PRESETS.map((p) => (
+            <button
+              key={p.hex}
+              onClick={() => applyColor(p.hex)}
+              className={`h-11 rounded-xl border-2 flex items-center gap-2 px-2 text-xs font-bold ${s.primary_color === p.hex ? "border-primary" : "border-border"}`}
+            >
+              <span className="h-6 w-6 rounded-lg border" style={{ background: p.hex }} />
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <input type="color" className="h-10 w-14 rounded-lg border bg-background" value={/^#[0-9a-fA-F]{6}$/.test(s.primary_color ?? "") ? s.primary_color : "#3b6cf6"} onChange={(e) => applyColor(e.target.value)} />
+          <Input placeholder="#7c3aed" value={s.primary_color ?? ""} onChange={(e) => setS({ ...s, primary_color: e.target.value })} />
+        </div>
+      </Section>
+
       <Section title="Discord Webhook"><Input placeholder="https://discord.com/api/webhooks/..." value={s.discord_webhook ?? ""} onChange={(e) => setS({ ...s, discord_webhook: e.target.value })} /></Section>
       <div className="sticky bottom-0 z-10 bg-background/95 backdrop-blur border-t py-3">
         <Button className="w-full" onClick={save}>ບັນທຶກຕັ້ງຄ່າ</Button>
