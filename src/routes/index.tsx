@@ -178,7 +178,7 @@ function Index() {
           <SectionTitle title="ສະຖິຕິ" />
           <div className="grid grid-cols-2 gap-3">
             <StatBox laoLabel="ຜູ້ໃຊ້ທັງໝົດ" enLabel="User all in shop" value={stats.members} icon={<Users />} />
-            <StatBox laoLabel="ຍອດເຂົ້າຊົມເວັບໄຊ" enLabel="Visits to our store" value={stats.visits} icon={<TrendingUp />} />
+            <StatBox laoLabel="ປະເພດສິນຄ້າ" enLabel="Product types in shop" value={products.length} icon={<Package />} />
             <StatBox laoLabel="ພ້ອມຈຳໜ່າຍ" enLabel="Ready for sale" value={stats.available} icon={<CheckCircle2 />} />
             <StatBox laoLabel="ຍອດຂາຍສິນຄ້າ" enLabel="Product already sold" value={stats.sold} icon={<ShoppingCart />} />
           </div>
