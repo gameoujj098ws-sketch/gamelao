@@ -67,7 +67,8 @@ function TopupPage() {
   const [cardOn, setCardOn] = useState(true);
   const [method, setMethod] = useState<Method>("menu");
   const [amount, setAmount] = useState(10000);
-  const [custom, setCustom] = useState("");
+  const [custom, setCustom] = useState("10000");
+  const [slipDone, setSlipDone] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [code, setCode] = useState("");
   const [card, setCard] = useState("");
@@ -117,7 +118,7 @@ function TopupPage() {
     return () => clearInterval(t);
   }, [method, sessionStart]);
 
-  const finalAmount = sessionStart ? amount : (custom ? parseInt(custom) || 0 : amount);
+  const finalAmount = sessionStart ? amount : (parseInt(custom) || 0);
   const remainingMs = sessionStart ? Math.max(0, QR_TTL_MS - (now - sessionStart)) : QR_TTL_MS;
   const mm = String(Math.floor(remainingMs / 60000)).padStart(2, "0");
   const ss = String(Math.floor((remainingMs % 60000) / 1000)).padStart(2, "0");
@@ -150,6 +151,7 @@ function TopupPage() {
       setSessionStart(null);
       setFile(null);
       setMethod("menu");
+      setSlipDone(false);
     };
     try {
       statusDialog.loading("ລໍຖ້າບຶດໜຶ່ງ...", "ກຳລັງກວດສອບສະລິບ");
@@ -302,11 +304,11 @@ function TopupPage() {
             <Label>ເລືອກຈຳນວນເງີນ</Label>
             <div className="grid grid-cols-2 gap-2.5">
               {PRESETS.map((p) => {
-                const active = amount === p && !custom;
+                const active = parseInt(custom) === p;
                 return (
                   <button
                     key={p}
-                    onClick={() => { setAmount(p); setCustom(""); }}
+                    onClick={() => { setAmount(p); setCustom(String(p)); }}
                     className={`h-16 rounded-2xl border-2 flex flex-col items-center justify-center transition active:scale-95 ${active ? "border-primary bg-primary/10 text-primary" : "border-border bg-background"}`}
                   >
                     <span className="text-lg font-extrabold">{p.toLocaleString()}</span>
@@ -317,7 +319,7 @@ function TopupPage() {
             </div>
             <div className="space-y-1.5">
               <Label>ຫຼືປ້ອນເອງ (₭)</Label>
-              <Input type="number" className="h-13 rounded-2xl font-bold" value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="ຈຳນວນເງີນ" />
+              <Input inputMode="numeric" className="h-13 rounded-2xl font-bold" value={custom} onChange={(e) => { const v = e.target.value.replace(/\D/g, ""); setCustom(v); setAmount(parseInt(v) || 0); }} placeholder="ຈຳນວນເງີນ" />
             </div>
             <Button className="w-full h-13 rounded-2xl text-base font-bold" disabled={finalAmount < 1000} onClick={startQrSession}>
               ສ້າງ QR Code ({formatKip(finalAmount)})
@@ -345,10 +347,10 @@ function TopupPage() {
                   </div>
                 )}
               </div>
-              <label className={`flex items-center gap-3 border-2 border-dashed rounded-2xl p-4 cursor-pointer transition ${busy ? "opacity-60" : "hover:bg-accent/50"}`}>
+              <label className={`flex items-center gap-3 border-2 border-dashed rounded-2xl p-4 cursor-pointer transition ${busy || slipDone ? "opacity-60 pointer-events-none" : "hover:bg-accent/50"}`}>
                 <Upload className="h-5 w-5 text-primary shrink-0" />
                 <span className="text-sm flex-1 truncate">{busy ? "ກຳລັງກວດສອບສະລິບ..." : file ? file.name : "ແນບຮູບສະລິບ (ກວດສອບອັດຕະໂນມັດ)"}</span>
-                <input type="file" accept="image/*" className="hidden" disabled={busy} onChange={(e) => { const f = e.target.files?.[0] ?? null; setFile(f); if (f) submitSlip(f); }} />
+                <input type="file" accept="image/*" className="hidden" disabled={busy || slipDone} onChange={(e) => { if (busy || slipDone) return; const f = e.target.files?.[0] ?? null; if (f) { setSlipDone(true); setFile(f); submitSlip(f); } }} />
               </label>
               <Button variant="ghost" className="w-full rounded-2xl text-destructive" onClick={cancelQrSession}>ຍົກເລີກ ແລະ ເລີ່ມໃໝ່</Button>
             </div>
