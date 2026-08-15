@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { statusDialog } from "./StatusDialog";
 import { formatKip } from "@/lib/format";
 import { Eye, Plus, Pencil, Trash2, Check, X, Send } from "lucide-react";
+import { THEME_PRESETS } from "@/lib/theme";
+
 
 type Category = { id: string; name: string; image_url: string | null; sort: number };
 type Product = {
@@ -697,6 +699,13 @@ function AdminSettings() {
     if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
     statusDialog.success("ບັນທຶກແລ້ວ", "");
   };
+  /** Save the chosen color right away so every open page re-themes live. */
+  const applyColor = async (hex: string) => {
+    setS((prev) => ({ ...prev, primary_color: hex }));
+    const { error } = await supabase.from("site_settings").update({ primary_color: hex }).eq("id", 1);
+    if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
+  };
+
   const addAd = async () => {
     if (!ad.image_url) return;
     await supabase.from("ads").update({ active: false }).eq("active", true);
