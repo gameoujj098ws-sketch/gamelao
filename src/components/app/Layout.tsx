@@ -62,17 +62,25 @@ export function Header({
               {unreadMsgs > 0 && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-destructive ring-2 ring-card animate-pulse" />}
             </button>
           </SheetTrigger>
-          <SheetContent className="w-[290px] p-0 flex flex-col bg-card border-l-0 rounded-l-3xl overflow-hidden">
-            <SheetTitle className="px-5 pt-5 pb-2 text-lg font-bold">{siteName}</SheetTitle>
+          <SheetContent
+            side="right"
+            className="w-[300px] max-w-[86vw] p-0 flex flex-col bg-card border rounded-3xl shadow-2xl overflow-hidden top-[86px] right-2 bottom-auto h-auto max-h-[calc(100vh-110px)] data-[state=open]:animate-in data-[state=closed]:animate-out"
+          >
+            <SheetTitle className="px-4 pt-4 pb-2 text-[15px] font-bold text-muted-foreground">{siteName}</SheetTitle>
             {profile ? (
-              <div className="px-2 py-1 flex-1 overflow-y-auto">
+              <div className="py-1 flex-1 overflow-y-auto">
                 <MenuItem icon={<Plus className="h-5 w-5" />} label="ເຕີມເງີນ" onClick={onTopup} />
                 <MenuItem icon={<MessageCircle className="h-5 w-5" />} label="ຂໍ້ຄວາມ" onClick={onMessages} badge={unreadMsgs} />
                 <MenuItem icon={<User className="h-5 w-5" />} label="ໂປຣໄຟລ໌" onClick={onProfile} />
                 <MenuItem icon={<Wallet2 className="h-5 w-5" />} label="ປະຫວັດເຕີມເງີນ" onClick={onHistory} />
-                <MenuItem icon={<History className="h-5 w-5" />} label="ປະຫວັດການຊື້" onClick={onHistory} />
+                <MenuItem icon={<History className="h-5 w-5" />} label="ປະຫວັດຊື້ສິນຄ້າ" onClick={onHistory} />
                 {helpLink && <MenuItem icon={<Headphones className="h-5 w-5" />} label="ຕິດຕໍ່ພວກເຮົາ" onClick={() => window.open(helpLink, "_blank")} />}
-                {isAdmin && <MenuItem icon={<Shield className="h-5 w-5" />} label="ໜ້າແອັດມິນ" onClick={onAdmin} />}
+                {isAdmin && (
+                  <>
+                    <div className="my-1 border-t border-border" />
+                    <MenuItem icon={<Shield className="h-5 w-5" />} label="ໜ້າແອັດມິນ" onClick={onAdmin} />
+                  </>
+                )}
                 <div className="my-1 border-t border-border" />
                 <MenuItem icon={<LogOut className="h-5 w-5" />} label="ອອກຈາກລະບົບ" danger onClick={async () => { await supabase.auth.signOut(); }} />
               </div>
@@ -83,6 +91,7 @@ export function Header({
               </div>
             )}
           </SheetContent>
+
         </Sheet>
       </header>
     </div>
