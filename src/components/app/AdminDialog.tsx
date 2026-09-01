@@ -695,6 +695,7 @@ function AdminSettings() {
       announcement: s.announcement, qr_url: s.qr_url || null, help_link: s.help_link || null,
       primary_color: s.primary_color || null, discord_webhook: s.discord_webhook || null,
       qr_enabled: s.qr_enabled !== "false", card_enabled: s.card_enabled !== "false",
+      qr_account_name: s.qr_account_name || "",
     });
     if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
     statusDialog.success("ບັນທຶກແລ້ວ", "");
@@ -744,7 +745,12 @@ function AdminSettings() {
           <Label>ເປີດຊ່ອງທາງບັດເຕີມເງີນ</Label>
         </div>
       </Section>
-      <Section title="QR Code ເຕີມເງີນ"><Input placeholder="ລິ້ງຮູບ QR" value={s.qr_url ?? ""} onChange={(e) => setS({ ...s, qr_url: e.target.value })} /></Section>
+      <Section title="QR Code ເຕີມເງີນ">
+        <Input placeholder="ລິ້ງຮູບ QR" value={s.qr_url ?? ""} onChange={(e) => setS({ ...s, qr_url: e.target.value })} />
+      </Section>
+      <Section title="ຊື່ບັນຊີຜູ້ຮັບ (ໃຊ້ກວດສອບສະລິບ)">
+        <Input placeholder="ຊື່ບັນຊີ ເຊັ່ນ SOMYONE KHAMKHEUNG" value={s.qr_account_name ?? ""} onChange={(e) => setS({ ...s, qr_account_name: e.target.value })} />
+      </Section>
       <Section title="ຊ່ວຍເຫຼືອ / ຕິດຕໍ່ແອັດມິນ"><Input placeholder="ລິ້ງ (ເຊັ່ນ Telegram, Line)" value={s.help_link ?? ""} onChange={(e) => setS({ ...s, help_link: e.target.value })} /></Section>
       <Section title="ສີເວັບ (ປ່ຽນທັນທີທັງເວັບ)">
         <div className="grid grid-cols-3 gap-2">
