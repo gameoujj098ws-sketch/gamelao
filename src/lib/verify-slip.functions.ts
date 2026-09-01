@@ -11,17 +11,37 @@ type Extracted = {
 };
 type VerifyResult = { ok: boolean; reason?: string; extracted?: Extracted };
 
-const EXPECTED_NAME = "SOMYONE KHAMKHEUNG";
+const DEFAULT_NAME = "SOMYONE KHAMKHEUNG";
 
 function normalizeName(s: string | null | undefined) {
   return (s ?? "").toUpperCase().replace(/[^A-Z ]/g, " ").replace(/\s+/g, " ").trim();
 }
 
-function containsExpectedName(s: string | null | undefined) {
-  const n = normalizeName(s);
-  if (!n) return false;
-  // Accept with or without MR/MRS prefix; require both tokens present in order.
-  return n.includes("SOMYONE") && n.includes("KHAMKHEUNG");
+/** Read the admin-configured receiver account name from site settings. */
+async function loadExpectedName(): Promise<string> {
+  try {
+    const url = process.env["SUPABASE_URL"];
+    const key = process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["SUPABASE_ANON_KEY"];
+    if (!url || !key) return DEFAULT_NAME;
+    const res = await fetch(`${url}/rest/v1/site_settings?id=eq.1&select=qr_account_name`, {
+      headers: { apikey: key },
+    });
+    if (!res.ok) return DEFAULT_NAME;
+    const rows = (await res.json()) as Array<{ qr_account_name?: string | null }>;
+    const name = normalizeName(rows?.[0]?.qr_account_name);
+    return name || DEFAULT_NAME;
+  } catch {
+    return DEFAULT_NAME;
+  }
+}
+
+function makeNameChecker(expected: string) {
+  const tokens = normalizeName(expected).split(" ").filter((t) => t.length > 2);
+  return (s: string | null | undefined) => {
+    const n = normalizeName(s);
+    if (!n || tokens.length === 0) return false;
+    return tokens.every((t) => n.includes(t));
+  };
 }
 
 export const verifySlip = createServerFn({ method: "POST" })
@@ -33,6 +53,8 @@ export const verifySlip = createServerFn({ method: "POST" })
     return data;
   })
   .handler(async ({ data }): Promise<VerifyResult> => {
+    const EXPECTED_NAME = await loadExpectedName();
+    const containsExpectedName = makeNameChecker(EXPECTED_NAME);
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) return { ok: false, reason: "ระบบตรวจสอบไม่พร้อมใช้งาน" };
 

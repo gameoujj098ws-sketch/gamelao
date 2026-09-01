@@ -450,6 +450,7 @@ export type Database = {
           id: number
           logo_url: string | null
           primary_color: string | null
+          qr_account_name: string
           qr_enabled: boolean
           qr_url: string | null
           site_name: string
@@ -463,6 +464,7 @@ export type Database = {
           id?: number
           logo_url?: string | null
           primary_color?: string | null
+          qr_account_name?: string
           qr_enabled?: boolean
           qr_url?: string | null
           site_name?: string
@@ -476,6 +478,7 @@ export type Database = {
           id?: number
           logo_url?: string | null
           primary_color?: string | null
+          qr_account_name?: string
           qr_enabled?: boolean
           qr_url?: string | null
           site_name?: string
