@@ -27,20 +27,28 @@ export function AdPopup() {
   if (!ad) return null;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-sm p-0 overflow-hidden gap-0 [&>button.absolute]:hidden">
-        <div className="relative">
-          <button onClick={() => setOpen(false)} className="absolute top-2 right-2 z-10 bg-black/60 text-white rounded-full p-1.5">
-            <X className="h-4 w-4" />
+      <DialogContent
+        className="w-auto max-w-[90vw] sm:max-w-[420px] p-0 bg-transparent border-0 shadow-none gap-0 [&>button.absolute]:hidden"
+      >
+        <div className="relative inline-block">
+          <button
+            onClick={() => setOpen(false)}
+            aria-label="ປິດ"
+            className="absolute -top-2 -left-2 z-10 h-9 w-9 rounded-full bg-card text-foreground shadow-lg border flex items-center justify-center active:scale-95 transition"
+          >
+            <X className="h-5 w-5" />
           </button>
           {ad.link ? (
-            <a href={ad.link} target="_blank" rel="noopener noreferrer"><img src={ad.image_url} alt="ad" className="w-full" /></a>
+            <a href={ad.link} target="_blank" rel="noopener noreferrer" className="block">
+              <img src={ad.image_url} alt="ad" className="block w-auto h-auto max-w-full max-h-[70vh] rounded-3xl shadow-2xl" />
+            </a>
           ) : (
-            <img src={ad.image_url} alt="ad" className="w-full" />
+            <img src={ad.image_url} alt="ad" className="block w-auto h-auto max-w-full max-h-[70vh] rounded-3xl shadow-2xl" />
           )}
         </div>
-        <div className="p-3 grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" onClick={() => setOpen(false)}>ປິດ</Button>
-          <Button variant="secondary" size="sm" onClick={snooze}><BellOff className="h-4 w-4 mr-1" />ປິດ 1 ຊົ່ວໂມງ</Button>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Button variant="secondary" size="sm" className="rounded-2xl" onClick={() => setOpen(false)}>ປິດ</Button>
+          <Button size="sm" className="rounded-2xl" onClick={snooze}><BellOff className="h-4 w-4 mr-1" />ປິດ 1 ຊົ່ວໂມງ</Button>
         </div>
       </DialogContent>
     </Dialog>
