@@ -11,7 +11,7 @@ import { readActiveQrSession } from "@/routes/topup";
 
 import { AdPopup } from "@/components/app/AdPopup";
 import { StatusDialog, statusDialog } from "@/components/app/StatusDialog";
-import { Megaphone, Trophy, ShoppingCart, Package, Users, TrendingUp, CheckCircle2, ShoppingBag, Bell } from "lucide-react";
+import { Megaphone, ShoppingCart, Package, Users, TrendingUp, CheckCircle2, ShoppingBag, Bell } from "lucide-react";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -25,7 +25,6 @@ type Product = {
   service_field_label: string | null; category_id: string | null; hidden_from_home: boolean;
 };
 type Category = { id: string; name: string; image_url: string | null };
-type Spender = { username: string; total: number; times: number };
 
 function Index() {
   const navigate = useNavigate();
@@ -35,7 +34,6 @@ function Index() {
   const [products, setProducts] = useState<Product[]>([]);
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
   const [stats, setStats] = useState({ members: 0, visits: 0, available: 0, sold: 0 });
-  const [spenders, setSpenders] = useState<Spender[]>([]);
   const [unread, setUnread] = useState(0);
   const [activeCat, setActiveCat] = useState<string | null>(null);
 
@@ -60,7 +58,6 @@ function Index() {
     supabase.from("categories").select("id,name,image_url").order("sort").then(({ data }) => setCats(data ?? []));
     supabase.from("products").select("*").order("created_at", { ascending: false }).then(({ data }) => setProducts(data ?? []));
     supabase.from("public_stats").select("*").maybeSingle().then(({ data }) => data && setStats(data as never));
-    supabase.rpc("top_spenders").then(({ data }) => setSpenders((data as Spender[]) ?? []));
     loadStock();
     if (!trackedRef.current) {
       trackedRef.current = true;
@@ -92,13 +89,13 @@ function Index() {
       />
 
       <main className="max-w-3xl mx-auto p-3 space-y-4">
-        <div className={`rounded-3xl aspect-[16/8] flex items-center justify-center overflow-hidden ${settings?.slide_url ? "" : "border-2 border-dashed border-primary/40 bg-card/60 backdrop-blur"}`}>
-          {settings?.slide_url ? (
-            <img src={settings.slide_url} alt="" className="w-full h-full object-cover rounded-3xl" />
-          ) : (
+        {settings?.slide_url ? (
+          <img src={settings.slide_url} alt="" className="w-full h-auto rounded-3xl" />
+        ) : (
+          <div className="rounded-3xl aspect-[16/8] flex items-center justify-center border-2 border-dashed border-primary/40 bg-card/60 backdrop-blur">
             <span className="text-muted-foreground text-sm">ຍັງບໍ່ໄດ້ໃສ່ຮູບສະໄລ້</span>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="flex items-center gap-3 bg-primary/5 border border-primary/15 rounded-full pl-1.5 pr-3 py-1.5 overflow-hidden">
           <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
@@ -184,23 +181,6 @@ function Index() {
           </div>
         </section>
 
-        <section>
-          <div className="flex items-center gap-2 mb-3"><span className="h-6 w-1.5 rounded-full bg-primary" /><h2 className="font-extrabold text-lg flex items-center gap-1"><Trophy className="h-4 w-4 text-yellow-500" />ຜູ້ເຕີມເງີນສູງສຸດ</h2></div>
-          {spenders.length === 0 ? (
-            <div className="text-sm text-muted-foreground glass rounded-2xl p-4 text-center">ຍັງບໍ່ມີຂໍ້ມູນ</div>
-          ) : (
-            <div className="space-y-1">
-              {spenders.slice(0, 3).map((s, i) => (
-                <div key={i} className="flex items-center gap-2 glass rounded-2xl p-2">
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm ${i === 0 ? "bg-yellow-400" : i === 1 ? "bg-gray-300" : "bg-orange-400"}`}>{i + 1}</div>
-                  <div className="flex-1 font-medium text-sm">{s.username}</div>
-                  <div className="text-xs text-muted-foreground">{s.times} ຄັ້ງ</div>
-                  <div className="font-semibold text-sm">{formatKip(s.total)}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
       </main>
 
       <BottomNav
