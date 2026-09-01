@@ -22,15 +22,16 @@ export function Header({
   const MenuItem = ({ icon, label, onClick, badge = 0, danger = false }: { icon: React.ReactNode; label: string; onClick: () => void; badge?: number; danger?: boolean }) => (
     <button
       onClick={() => { setOpen(false); onClick(); }}
-      className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-left transition active:scale-[.99] hover:bg-accent/60 ${danger ? "text-destructive" : ""}`}
+      className={`w-full flex items-center gap-3.5 px-4 py-3 text-left transition active:scale-[.99] hover:bg-accent/50 ${danger ? "text-destructive" : ""}`}
     >
       <span className={`shrink-0 ${danger ? "text-destructive" : "text-primary"}`}>{icon}</span>
-      <span className="flex-1 font-medium">{label}</span>
+      <span className="flex-1 text-[17px] font-semibold">{label}</span>
       {badge > 0 && (
         <span className="bg-destructive text-destructive-foreground text-xs rounded-full min-w-5 h-5 px-1.5 flex items-center justify-center font-bold">{badge}</span>
       )}
     </button>
   );
+
 
   return (
     <div className="fixed top-2 inset-x-2 z-40">
