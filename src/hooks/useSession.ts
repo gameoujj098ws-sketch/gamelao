@@ -7,6 +7,9 @@ export type Profile = {
   username: string;
   email: string;
   wallet_balance: number;
+  created_at?: string;
+  banned?: boolean;
+  ban_reason?: string | null;
 };
 
 export function useSession() {

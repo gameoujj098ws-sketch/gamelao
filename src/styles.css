@@ -121,3 +121,33 @@
   100% { transform: translateX(-100%); }
 }
 
+
+.snowflake {
+  position: absolute;
+  top: -10px;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--color-primary) 35%, white);
+  animation-name: snowfall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes snowfall {
+  0% { transform: translate3d(0, -10vh, 0) rotate(0deg); }
+  100% { transform: translate3d(14px, 110vh, 0) rotate(360deg); }
+}
+
+@utility float-soft { animation: float-soft 5s ease-in-out infinite; }
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@utility rise-in { animation: rise-in .45s cubic-bezier(.22,1,.36,1) both; }
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin-wheel-turn {
+  to { transform: rotate(var(--spin-to, 360deg)); }
+}

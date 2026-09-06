@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ResetPasswordDialog } from "@/components/app/ResetPasswordDialog";
+import { Snow } from "@/components/app/Snow";
+import { BanGate } from "@/components/app/BanGate";
 
 function NotFoundComponent() {
   return (
@@ -122,8 +124,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+      <Snow />
       <Outlet />
       <ResetPasswordDialog />
+      <BanGate />
     </QueryClientProvider>
   );
 }
