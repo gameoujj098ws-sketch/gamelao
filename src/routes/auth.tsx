@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { statusDialog, StatusDialog } from "@/components/app/StatusDialog";
+import { notify } from "@/lib/notify";
 import { LogIn, UserPlus, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
@@ -152,6 +153,7 @@ function RegisterForm({ onDone }: { onDone: () => void }) {
         options: { emailRedirectTo: window.location.origin, data: { username: f.username.trim() } },
       });
       if (error) throw error;
+      notify("register", "ມີສະມາຊິກໃໝ່", [`ຊື່ຜູ້ໃຊ້: ${f.username.trim()}`, `ອີເມວ: ${f.email.trim()}`]);
       statusDialog.success("ສຳເລັດ", "ສະໝັກສະມາຊິກສຳເລັດ ກະລຸນາເຂົ້າສູ່ລະບົບ");
       onDone();
     } catch (e) {

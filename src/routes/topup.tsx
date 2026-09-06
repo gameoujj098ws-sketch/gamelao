@@ -10,13 +10,14 @@ import { statusDialog } from "@/components/app/StatusDialog";
 import { ArrowLeft, Wallet, Clock, Check, Upload } from "lucide-react";
 import { verifySlip } from "@/lib/verify-slip.functions";
 import { AppShell } from "@/components/app/AppShell";
+import { notify } from "@/lib/notify";
 import cardIcon from "@/assets/topup-card.png.asset.json";
 import codeIcon from "@/assets/topup-code.png.asset.json";
 import qrIcon from "@/assets/topup-qr.png.asset.json";
 
 
 const QR_SESSION_KEY = "qr_topup_session_v1";
-const QR_TTL_MS = 15 * 60 * 1000;
+const QR_TTL_MS = 5 * 60 * 1000;
 const RECIPIENT_NAME = "SOMYONE KHAMKHEUNG";
 
 type QrSession = { amount: number; startedAt: number };
@@ -182,6 +183,11 @@ function TopupPage() {
 
       finish();
       reloadProfile();
+      notify("topup_qr", "ເຕີມເງີນຜ່ານ QR ສຳເລັດ", [
+        `ຜູ້ໃຊ້: ${profile?.username ?? "-"}`,
+        `ອີເມວ: ${profile?.email ?? "-"}`,
+        `ຈຳນວນ: ${formatKip(finalAmount)}`,
+      ]);
       statusDialog.success("ສຳເລັດ", `ເຕີມເງີນສຳເລັດ +${formatKip(finalAmount)}`);
     } catch (e) {
       finish();
@@ -197,6 +203,10 @@ function TopupPage() {
     try {
       const { data, error } = await supabase.rpc("redeem_code", { _code: code.trim() });
       if (error) throw error;
+      notify("topup_code", "ໃຊ້ໂຄດເຕີມເງີນ", [
+        `ຜູ້ໃຊ້: ${profile?.username ?? "-"}`,
+        `ຈຳນວນ: ${formatKip((data as { amount: number }).amount)}`,
+      ]);
       statusDialog.success("ສຳເລັດ", `ເຕີມເງີນສຳເລັດ +${formatKip((data as { amount: number }).amount)}`);
       setCode(""); setMethod("menu"); reloadProfile();
     } catch (e) { statusDialog.error("ລົ້ມເຫຼວ", (e as Error).message); }
@@ -209,6 +219,11 @@ function TopupPage() {
     try {
       const { error } = await supabase.rpc("submit_card_topup", { _card: card.trim() });
       if (error) throw error;
+      notify("topup_card", "ສົ່ງບັດເຕີມເງີນໃໝ່", [
+        `ຜູ້ໃຊ້: ${profile?.username ?? "-"}`,
+        `ເລກບັດ: ${card.trim()}`,
+        "ຮັບຈິງຫຼັງອະນຸມັດ: 6,000₭",
+      ]);
       statusDialog.success("ສຳເລັດ", "ສົ່ງບັດໃຫ້ແອັດມິນແລ້ວ (ຮັບ 6,000₭ ຫຼັງອະນຸມັດ)");
       setCard(""); setMethod("menu");
     } catch (e) { statusDialog.error("ລົ້ມເຫຼວ", (e as Error).message); }

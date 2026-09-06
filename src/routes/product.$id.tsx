@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, ShoppingCart, Package, Minus, Plus, Copy, Facebook, MessageCircle, Twitter, Bell, CheckCircle2, ClipboardList, Boxes, AlignLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
+import { notify } from "@/lib/notify";
 import { formatKip } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,7 +36,7 @@ type Field = { id: string; label: string };
 function ProductPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { user, reloadProfile } = useSession();
+  const { user, profile, reloadProfile } = useSession();
   const [p, setP] = useState<Product | null>(null);
   const [stock, setStock] = useState(0);
   const [qty, setQty] = useState(1);
@@ -94,6 +95,12 @@ function ProductPage() {
           _product_id: p.id, _package_id: packId as string, _answers: list,
         } as never);
         if (error) throw error;
+        notify("service_order", "ມີອໍເດີບໍລິການໃໝ່", [
+          `ສິນຄ້າ: ${p.name}${selectedPack ? ` (${selectedPack.name})` : ""}`,
+          `ລູກຄ້າ: ${profile?.username ?? "-"}`,
+          `ຈຳນວນເງີນ: ${formatKip(total)}`,
+          ...list.map((x) => `${x.label}: ${x.value}`),
+        ]);
         statusDialog.success("ສຳເລັດ", "ຄຳສັ່ງຊື້ຂອງທ່ານກຳລັງດຳເນີນການ ລໍຖ້າແອັດມິນ");
         setAnswers({});
       } else {
@@ -103,6 +110,12 @@ function ProductPage() {
           if (error) throw error;
           results.push((data as { game_data: string }).game_data);
         }
+        notify("purchase", "ມີການຊື້ສິນຄ້າ", [
+          `ສິນຄ້າ: ${p.name}`,
+          `ລູກຄ້າ: ${profile?.username ?? "-"}`,
+          `ຈຳນວນ: ${qty} ອັນ`,
+          `ລວມ: ${formatKip(total)}`,
+        ]);
         statusDialog.success("ຊື້ສຳເລັດ", `ຂໍ້ມູນ:\n${results.join("\n")}`);
         loadStock(p.id);
       }

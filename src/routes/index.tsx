@@ -9,6 +9,7 @@ import { readActiveQrSession } from "@/routes/topup";
 
 
 
+import { SpinWheel } from "@/components/app/SpinWheel";
 import { AdPopup } from "@/components/app/AdPopup";
 import { StatusDialog, statusDialog } from "@/components/app/StatusDialog";
 import { Megaphone, ShoppingCart, Package, Users, TrendingUp, CheckCircle2, ShoppingBag, Bell } from "lucide-react";
@@ -168,6 +169,13 @@ function Index() {
                 {servicesShown.map((p) => <ProductCard key={p.id} p={p} stock={-1} onClick={() => navigate({ to: "/product/$id", params: { id: p.id } })} />)}
               </div>
             )}
+          </section>
+        )}
+
+        {!activeCat && (
+          <section>
+            <SectionTitle title="ມິນິເກມ" subtitle="ໝຸນວົງລໍ້ຮັບເງີນເຂົ້າກະເປົ໋າ" />
+            <SpinWheel canSpin={!!user} onNeedLogin={openAuth} onSpun={() => window.location.reload()} />
           </section>
         )}
 
