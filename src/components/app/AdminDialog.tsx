@@ -9,8 +9,9 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { statusDialog } from "./StatusDialog";
 import { formatKip } from "@/lib/format";
-import { Eye, Plus, Pencil, Trash2, Check, X, Send } from "lucide-react";
+import { Eye, Plus, Pencil, Trash2, Check, X, Send, Ban } from "lucide-react";
 import { THEME_PRESETS } from "@/lib/theme";
+import { adminSetUserPassword } from "@/lib/admin.functions";
 
 
 type Category = { id: string; name: string; image_url: string | null; sort: number };
@@ -22,7 +23,7 @@ type Product = {
 
 type AdminTab =
   | "stats" | "topups" | "cards" | "orders" | "services"
-  | "svcmanage" | "categories" | "products" | "users" | "settings";
+  | "svcmanage" | "categories" | "products" | "users" | "spin" | "settings";
 
 const ADMIN_GROUPS: { label: string; items: { value: AdminTab; label: string; dot?: "topups" | "cards" | "services" }[] }[] = [
   { label: "ພາບລວມ", items: [{ value: "stats", label: "ສະຖິຕິ" }] },
@@ -43,7 +44,7 @@ const ADMIN_GROUPS: { label: string; items: { value: AdminTab; label: string; do
       { value: "svcmanage", label: "ສິນຄ້າບໍລິການ" },
     ],
   },
-  { label: "ລະບົບ", items: [{ value: "users", label: "ຜູ້ໃຊ້" }, { value: "settings", label: "ຕັ້ງຄ່າເວັບ" }] },
+  { label: "ລະບົບ", items: [{ value: "users", label: "ຜູ້ໃຊ້" }, { value: "spin", label: "ມິນິເກມ" }, { value: "settings", label: "ຕັ້ງຄ່າເວັບ" }] },
 ];
 
 export function AdminPanel() {
@@ -101,6 +102,7 @@ export function AdminPanel() {
         {tab === "categories" && <AdminCategories />}
         {tab === "products" && <AdminProducts />}
         {tab === "users" && <AdminUsers />}
+        {tab === "spin" && <AdminSpin />}
         {tab === "settings" && <AdminSettings />}
       </div>
     </div>
@@ -194,7 +196,6 @@ function AdminStats() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 py-3">
       <Stat label="ສະມາຊິກທັງໝົດ" value={s.members} />
-      <Stat label="ຜູ້ຊົມ" value={s.visits} />
       <Stat label="ອໍເດີ" value={s.orderCount} />
       <Stat label="ລາຍຮັບເດືອນ" value={formatKip(s.monthRevenue)} />
       <Stat label="ລາຍຮັບລວມ" value={formatKip(s.revenue)} />
@@ -638,17 +639,57 @@ function AdminProducts() {
   );
 }
 
+type UserRow = { id: string; username: string; email: string; wallet_balance: number; created_at: string; banned: boolean; ban_reason: string | null };
+type Summary = {
+  profile: UserRow | null;
+  topup_count: number; topup_total: number;
+  card_count: number; card_total: number;
+  order_count: number; order_total: number;
+  service_count: number; service_total: number;
+  is_admin: boolean;
+};
+
 function AdminUsers() {
-  const [rows, setRows] = useState<{ id: string; username: string; email: string; wallet_balance: number }[]>([]);
-  const [view, setView] = useState<typeof rows[number] | null>(null);
+  const [rows, setRows] = useState<UserRow[]>([]);
+  const [q, setQ] = useState("");
+  const [view, setView] = useState<UserRow | null>(null);
+  const [sum, setSum] = useState<Summary | null>(null);
   const [newBal, setNewBal] = useState("");
-  const load = () => supabase.from("profiles").select("*").order("created_at", { ascending: false }).then(({ data }) => setRows(data ?? []));
+  const [newPw, setNewPw] = useState("");
+  const [banReason, setBanReason] = useState("");
+  const [askBan, setAskBan] = useState(false);
+  const load = () => supabase.from("profiles").select("*").order("created_at", { ascending: false }).then(({ data }) => setRows((data as never as UserRow[]) ?? []));
   useEffect(() => { load(); }, []);
+
+  const open = async (r: UserRow) => {
+    setView(r); setNewBal(String(r.wallet_balance)); setNewPw(""); setBanReason(r.ban_reason ?? ""); setAskBan(false); setSum(null);
+    const { data, error } = await supabase.rpc("admin_user_summary", { _user_id: r.id });
+    if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
+    setSum(data as never as Summary);
+  };
+
   const setWallet = async () => {
     if (!view) return;
     const { error } = await supabase.rpc("admin_set_wallet", { _user_id: view.id, _new_balance: Number(newBal) });
     if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
-    statusDialog.success("ບັນທຶກແລ້ວ", ""); setView(null); load();
+    statusDialog.success("ບັນທຶກຍອດເງີນແລ້ວ", ""); load(); open({ ...view, wallet_balance: Number(newBal) });
+  };
+  const changePw = async () => {
+    if (!view) return;
+    if (newPw.length < 6) return statusDialog.error("ລົ້ມເຫຼວ", "ລະຫັດຢ່າງໜ້ອຍ 6 ຕົວ");
+    try {
+      await adminSetUserPassword({ data: { userId: view.id, password: newPw } });
+      setNewPw("");
+      statusDialog.success("ສຳເລັດ", "ປ່ຽນລະຫັດຜ່ານຜູ້ໃຊ້ແລ້ວ");
+    } catch (e) { statusDialog.error("ລົ້ມເຫຼວ", (e as Error).message); }
+  };
+  const setBan = async (banned: boolean) => {
+    if (!view) return;
+    if (banned && !banReason.trim()) return statusDialog.error("ລົ້ມເຫຼວ", "ກະລຸນາໃສ່ສາເຫດການແບນ");
+    const { error } = await supabase.rpc("admin_set_ban", { _user_id: view.id, _banned: banned, _reason: banned ? banReason.trim() : null });
+    if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
+    statusDialog.success("ສຳເລັດ", banned ? "ແບນຜູ້ໃຊ້ແລ້ວ" : "ຍົກເລີກແບນແລ້ວ");
+    setAskBan(false); load(); open({ ...view, banned, ban_reason: banned ? banReason.trim() : null });
   };
   const del = async (id: string) => {
     if (!confirm("ລົບບັນຊີນີ້?")) return;
@@ -656,26 +697,181 @@ function AdminUsers() {
     if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
     load();
   };
+
+  const shown = rows.filter((r) => !q.trim() || r.username.toLowerCase().includes(q.toLowerCase()) || r.email.toLowerCase().includes(q.toLowerCase()));
+
   return (
     <div className="space-y-2 py-3">
-      {rows.map((r) => (
-        <div key={r.id} className="border rounded-lg p-3 flex items-center gap-2 text-sm">
-          <div className="flex-1"><div className="font-semibold">{r.username}</div><div className="text-xs text-muted-foreground">{r.email} · {formatKip(r.wallet_balance)}</div></div>
-          <Button size="sm" variant="outline" onClick={() => { setView(r); setNewBal(String(r.wallet_balance)); }}><Eye className="h-4 w-4" /></Button>
+      <Input placeholder="ຄົ້ນຫາຊື່ຜູ້ໃຊ້ / ອີເມວ" value={q} onChange={(e) => setQ(e.target.value)} />
+      {shown.map((r) => (
+        <div key={r.id} className="border rounded-2xl p-3 flex items-center gap-2 text-sm">
+          <div className="h-10 w-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center shrink-0">
+            {r.username.slice(0, 1).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold truncate flex items-center gap-1.5">
+              {r.username}
+              {r.banned && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive font-bold">ຖືກແບນ</span>}
+            </div>
+            <div className="text-xs text-muted-foreground truncate">{r.email} · {formatKip(r.wallet_balance)}</div>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => open(r)}><Eye className="h-4 w-4" /></Button>
           <Button size="sm" variant="outline" onClick={() => del(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
         </div>
       ))}
+
       <Dialog open={!!view} onOpenChange={(o) => !o && setView(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>ຂໍ້ມູນຜູ້ໃຊ້</DialogTitle></DialogHeader>
-          {view && <div className="space-y-2">
-            <div><Label>ຊື່ຜູ້ໃຊ້</Label><Input value={view.username} disabled /></div>
-            <div><Label>ອີເມວ</Label><Input value={view.email} disabled /></div>
-            <div><Label>ຍອດເງີນ (₭)</Label><Input type="number" value={newBal} onChange={(e) => setNewBal(e.target.value)} /></div>
-            <Button className="w-full" onClick={setWallet}>ບັນທຶກຍອດເງີນ</Button>
-          </div>}
+        <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto rounded-3xl">
+          <DialogHeader><DialogTitle>ຂໍ້ມູນລູກຄ້າ</DialogTitle></DialogHeader>
+          {view && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="h-16 w-16 rounded-full bg-primary/10 text-primary text-2xl font-extrabold flex items-center justify-center">
+                  {view.username.slice(0, 1).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <div className="font-extrabold truncate">{view.username}</div>
+                  <div className="text-xs text-muted-foreground break-all">{view.email}</div>
+                  {sum?.is_admin && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-bold">ແອັດມິນ</span>}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <Box label="ຍອດເງີນກະເປົ໋າ" value={formatKip(view.wallet_balance)} />
+                <Box label="ສະໝັກເມື່ອ" value={new Date(view.created_at).toLocaleDateString()} />
+                <Box label="ເຕີມເງີນ" value={`${sum?.topup_count ?? 0} ຄັ້ງ · ${formatKip(sum?.topup_total ?? 0)}`} />
+                <Box label="ບັດເຕີມເງີນ" value={`${sum?.card_count ?? 0} ໃບ · ${formatKip(sum?.card_total ?? 0)}`} />
+                <Box label="ຊື້ສິນຄ້າ" value={`${sum?.order_count ?? 0} ອໍເດີ · ${formatKip(sum?.order_total ?? 0)}`} />
+                <Box label="ອໍເດີບໍລິການ" value={`${sum?.service_count ?? 0} ອໍເດີ · ${formatKip(sum?.service_total ?? 0)}`} />
+              </div>
+
+              <div><Label>ລະຫັດຜ່ານ</Label><Input value="ບໍ່ສາມາດເບິ່ງໄດ້" disabled /></div>
+              <div className="space-y-2">
+                <Label>ຕັ້ງລະຫັດຜ່ານໃໝ່</Label>
+                <Input type="password" placeholder="ຢ່າງໜ້ອຍ 6 ຕົວ" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
+                <Button size="sm" variant="outline" className="w-full" onClick={changePw}>ປ່ຽນລະຫັດຜ່ານ</Button>
+              </div>
+
+              <div className="space-y-2">
+                <Label>ຍອດເງີນ (₭)</Label>
+                <Input type="number" value={newBal} onChange={(e) => setNewBal(e.target.value)} />
+                <Button size="sm" className="w-full" onClick={setWallet}>ບັນທຶກຍອດເງີນ</Button>
+              </div>
+
+              {view.banned ? (
+                <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+                  <div className="text-sm font-bold text-destructive">ຜູ້ໃຊ້ນີ້ຖືກແບນ</div>
+                  <div className="text-xs">ສາເຫດ: {view.ban_reason || "-"}</div>
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => setBan(false)}>ຍົກເລີກແບນ</Button>
+                </div>
+              ) : askBan ? (
+                <div className="rounded-2xl border border-destructive/30 p-3 space-y-2">
+                  <Label>ສາເຫດການແບນ</Label>
+                  <Textarea rows={2} value={banReason} onChange={(e) => setBanReason(e.target.value)} placeholder="ເຊັ່ນ ໂກງ / ໃຊ້ສະລິບປອມ" />
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="destructive" className="flex-1" onClick={() => setBan(true)}>ຢືນຢັນແບນ</Button>
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => setAskBan(false)}>ຍົກເລີກ</Button>
+                  </div>
+                </div>
+              ) : (
+                <Button variant="destructive" className="w-full" onClick={() => setAskBan(true)}><Ban className="h-4 w-4" />ແບນຜູ້ໃຊ້ນີ້</Button>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+function Box({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-xl border p-2"><div className="text-[11px] text-muted-foreground">{label}</div><div className="font-bold text-xs">{value}</div></div>;
+}
+
+function AdminSpin() {
+  type Prize = { id: string; label: string; amount: number; weight: number; sort: number };
+  type Hist = { id: string; user_id: string; prize_label: string; amount: number; cost: number; created_at: string };
+  const [enabled, setEnabled] = useState(false);
+  const [cost, setCost] = useState("5000");
+  const [prizes, setPrizes] = useState<Prize[]>([]);
+  const [form, setForm] = useState({ label: "", amount: "", weight: "1" });
+  const [hist, setHist] = useState<Hist[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, { username: string; email: string }>>({});
+
+  const load = async () => {
+    const [{ data: s }, { data: p }, { data: h }] = await Promise.all([
+      supabase.from("site_settings").select("spin_enabled,spin_cost").eq("id", 1).maybeSingle(),
+      supabase.from("spin_prizes").select("*").order("sort"),
+      supabase.from("spin_history").select("*").order("created_at", { ascending: false }).limit(30),
+    ]);
+    const st = s as { spin_enabled: boolean; spin_cost: number } | null;
+    setEnabled(!!st?.spin_enabled); setCost(String(st?.spin_cost ?? 5000));
+    setPrizes((p as never as Prize[]) ?? []);
+    const list = (h as never as Hist[]) ?? [];
+    setHist(list);
+    setProfiles(await loadProfiles(list.map((r) => r.user_id)));
+  };
+  useEffect(() => { load(); }, []);
+
+  const saveConfig = async (nextEnabled?: boolean) => {
+    const { error } = await supabase.from("site_settings").update({
+      spin_enabled: nextEnabled ?? enabled, spin_cost: Number(cost) || 0,
+    }).eq("id", 1);
+    if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
+    if (nextEnabled !== undefined) setEnabled(nextEnabled);
+    statusDialog.success("ບັນທຶກແລ້ວ", "");
+  };
+  const addPrize = async () => {
+    if (!form.label.trim()) return;
+    const { error } = await supabase.from("spin_prizes").insert({
+      label: form.label.trim(), amount: Number(form.amount) || 0,
+      weight: Math.max(1, Number(form.weight) || 1), sort: prizes.length,
+    });
+    if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
+    setForm({ label: "", amount: "", weight: "1" }); load();
+  };
+  const delPrize = async (id: string) => { await supabase.from("spin_prizes").delete().eq("id", id); load(); };
+
+  const totalWeight = prizes.reduce((a, b) => a + b.weight, 0) || 1;
+
+  return (
+    <div className="space-y-3 py-3">
+      <div className="border rounded-2xl p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <Switch checked={enabled} onCheckedChange={(v) => saveConfig(v)} />
+          <Label>ເປີດມິນິເກມວົງລໍ້ໃນໜ້າຫຼັກ</Label>
+        </div>
+        <Label>ຄ່າໝຸນຕໍ່ຄັ້ງ (₭)</Label>
+        <Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} />
+        <Button size="sm" onClick={() => saveConfig()}>ບັນທຶກ</Button>
+      </div>
+
+      <div className="border rounded-2xl p-3 space-y-2">
+        <div className="font-semibold text-sm">ລາງວັນ</div>
+        {prizes.map((p) => (
+          <div key={p.id} className="flex items-center gap-2 text-sm border rounded-xl p-2">
+            <div className="flex-1 truncate">{p.label}</div>
+            <div className="font-semibold">{formatKip(p.amount)}</div>
+            <div className="text-xs text-muted-foreground">{Math.round((p.weight / totalWeight) * 100)}%</div>
+            <Button size="sm" variant="ghost" onClick={() => delPrize(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+          </div>
+        ))}
+        <Input placeholder="ຊື່ລາງວັນ ເຊັ່ນ 10,000₭ ຫຼື ບໍ່ໄດ້ຫຍັງ" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} />
+        <Input type="number" placeholder="ຈຳນວນເງີນທີ່ໄດ້ (₭)" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+        <Input type="number" placeholder="ນ້ຳໜັກໂອກາດ (ຫຼາຍ = ອອກງ່າຍ)" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} />
+        <Button size="sm" onClick={addPrize}><Plus className="h-4 w-4" />ເພີ່ມລາງວັນ</Button>
+      </div>
+
+      <div className="border rounded-2xl p-3 space-y-2">
+        <div className="font-semibold text-sm">ປະຫວັດການໝຸນ</div>
+        {hist.length === 0 && <div className="text-xs text-muted-foreground">ຍັງບໍ່ມີ</div>}
+        {hist.map((h) => (
+          <div key={h.id} className="text-xs border rounded-xl p-2 flex items-center gap-2">
+            <div className="flex-1 truncate">{profiles[h.user_id]?.username ?? "-"} · {h.prize_label}</div>
+            <div className="font-semibold">+{formatKip(h.amount)}</div>
+            <div className="text-muted-foreground">{new Date(h.created_at).toLocaleString()}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
