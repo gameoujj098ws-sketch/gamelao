@@ -36,7 +36,7 @@ type Field = { id: string; label: string };
 function ProductPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { user, reloadProfile } = useSession();
+  const { user, profile, reloadProfile } = useSession();
   const [p, setP] = useState<Product | null>(null);
   const [stock, setStock] = useState(0);
   const [qty, setQty] = useState(1);
