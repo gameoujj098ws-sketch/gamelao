@@ -157,7 +157,9 @@ function TopupPage() {
     try {
       statusDialog.loading("ລໍຖ້າບຶດໜຶ່ງ...", "ກຳລັງກວດສອບສະລິບ");
       const dataUrl = await fileToDataUrl(slip);
-      const verdict = await verifySlip({ data: { imageDataUrl: dataUrl, expectedAmount: finalAmount } });
+      const verdict = await verifySlip({
+        data: { imageDataUrl: dataUrl, expectedAmount: finalAmount, qrStartedAt: sessionStart ?? Date.now() },
+      });
 
       const ext = (slip.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
       const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;

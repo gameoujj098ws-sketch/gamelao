@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-type VerifyInput = { imageDataUrl: string; expectedAmount: number };
+type VerifyInput = { imageDataUrl: string; expectedAmount: number; qrStartedAt?: number };
 type Extracted = {
   recipient_name?: string | null;
   amount?: number | null;
@@ -117,20 +117,31 @@ export const verifySlip = createServerFn({ method: "POST" })
       };
     }
 
-    // 3. Date recent (within 24h)
+    // 3. Transfer time must fall inside the QR session window
+    const started = typeof data.qrStartedAt === "number" && data.qrStartedAt > 0 ? data.qrStartedAt : Date.now();
+    const WINDOW_MS = 5 * 60 * 1000;
+    const CLOCK_SKEW_MS = 90 * 1000; // slip clocks are rarely exact
+    const windowFrom = started - CLOCK_SKEW_MS;
+    const windowTo = started + WINDOW_MS + CLOCK_SKEW_MS;
+    const fmt = (ms: number) =>
+      new Date(ms).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", hour12: false });
+
     const d = extracted.date_iso ? new Date(extracted.date_iso) : null;
     if (!d || isNaN(d.getTime())) {
-      return { ok: false, reason: "อ่านวันที่-เวลาบนสลิปไม่ได้", extracted };
+      return { ok: false, reason: "อ่านวันที่-เวลาบนสลิปไม่ได้ ถ่ายสลิปให้ชัดอีกครั้ง", extracted };
     }
-    const diffMs = Math.abs(Date.now() - d.getTime());
-    if (diffMs > 24 * 60 * 60 * 1000) {
-      return { ok: false, reason: "วันที่-เวลาบนสลิปไม่ใช่ปัจจุบัน", extracted };
+    if (d.getTime() < windowFrom || d.getTime() > windowTo) {
+      return {
+        ok: false,
+        reason: `วันที่-เวลาบนสลิป (${fmt(d.getTime())}) ไม่ตรงกับเวลาที่สร้าง QR (${fmt(started)}) ต้องโอนภายใน 5 นาทีหลังสร้าง QR`,
+        extracted,
+      };
     }
 
     // 4. QR cross-check (if QR fields present, they must agree with 1-3)
     if (extracted.qr_recipient_name || extracted.qr_amount || extracted.qr_date_iso) {
       if (extracted.qr_recipient_name && !containsExpectedName(extracted.qr_recipient_name)) {
-        return { ok: false, reason: "ข้อมูลใน QR ของสลิป: ชื่อผู้รับไม่ตรง", extracted };
+        return { ok: false, reason: `ข้อมูลใน QR ของสลิป: ชื่อผู้รับไม่ตรง ต้องเป็น ${EXPECTED_NAME}`, extracted };
       }
       if (extracted.qr_amount != null) {
         const qa = Number(extracted.qr_amount);
@@ -140,8 +151,8 @@ export const verifySlip = createServerFn({ method: "POST" })
       }
       if (extracted.qr_date_iso) {
         const qd = new Date(extracted.qr_date_iso);
-        if (!isNaN(qd.getTime()) && Math.abs(Date.now() - qd.getTime()) > 24 * 60 * 60 * 1000) {
-          return { ok: false, reason: "ข้อมูลใน QR ของสลิป: วันที่-เวลาไม่ใช่ปัจจุบัน", extracted };
+        if (!isNaN(qd.getTime()) && (qd.getTime() < windowFrom || qd.getTime() > windowTo)) {
+          return { ok: false, reason: "ข้อมูลใน QR ของสลิป: วันที่-เวลาไม่ตรงกับเวลาที่สร้าง QR", extracted };
         }
       }
     }

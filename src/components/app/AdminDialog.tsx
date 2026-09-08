@@ -686,7 +686,7 @@ function AdminUsers() {
   const setBan = async (banned: boolean) => {
     if (!view) return;
     if (banned && !banReason.trim()) return statusDialog.error("ລົ້ມເຫຼວ", "ກະລຸນາໃສ່ສາເຫດການແບນ");
-    const { error } = await supabase.rpc("admin_set_ban", { _user_id: view.id, _banned: banned, _reason: banned ? banReason.trim() : null });
+    const { error } = await supabase.rpc("admin_set_ban", { _user_id: view.id, _banned: banned, _reason: banned ? banReason.trim() : undefined });
     if (error) return statusDialog.error("ລົ້ມເຫຼວ", error.message);
     statusDialog.success("ສຳເລັດ", banned ? "ແບນຜູ້ໃຊ້ແລ້ວ" : "ຍົກເລີກແບນແລ້ວ");
     setAskBan(false); load(); open({ ...view, banned, ban_reason: banned ? banReason.trim() : null });
