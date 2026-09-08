@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-type VerifyInput = { imageDataUrl: string; expectedAmount: number };
+type VerifyInput = { imageDataUrl: string; expectedAmount: number; qrStartedAt?: number };
 type Extracted = {
   recipient_name?: string | null;
   amount?: number | null;
