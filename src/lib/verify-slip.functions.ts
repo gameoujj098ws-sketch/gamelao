@@ -77,10 +77,10 @@ export const verifySlip = createServerFn({ method: "POST" })
 
     const prompt = `คุณคือระบบตรวจสอบสลิปโอนเงินธนาคารลาว/ไทย
 วิเคราะห์ภาพสลิปนี้และดึงข้อมูล 2 ชุด:
-(A) ข้อความบนสลิป: ชื่อผู้รับ (recipient_name), จำนวนเงิน (amount, ตัวเลขล้วน), วันที่-เวลาโอน (date_iso, รูปแบบ ISO 8601 พร้อมโซนเวลา ถ้าไม่มีให้ใช้ +07:00)
+(A) ข้อความบนสลิป: ชื่อผู้รับ (recipient_name), จำนวนเงิน (amount, ตัวเลขล้วน), วันที่-เวลาโอน (date_iso, รูปแบบ ISO 8601 พร้อมโซนเวลา ถ้าไม่มีให้ใช้ +07:00), เลขอ้างอิง/หมายเลขรายการ (reference_no เช่น Ref No, Transaction ID, เลขที่รายการ ให้ตอบเป็นตัวอักษร-ตัวเลขล้วน)
 (B) ข้อมูลจาก QR Code ในสลิป (ถ้ามีและอ่านได้): qr_recipient_name, qr_amount, qr_date_iso
 ตอบเป็น JSON เท่านั้น ไม่มีคำอธิบายอื่น รูปแบบ:
-{"recipient_name":"...","amount":0,"date_iso":"...","qr_recipient_name":"...","qr_amount":0,"qr_date_iso":"..."}
+{"recipient_name":"...","amount":0,"date_iso":"...","reference_no":"...","qr_recipient_name":"...","qr_amount":0,"qr_date_iso":"..."}
 ค่าที่ไม่ทราบให้ใส่ null`;
 
     let extracted: Extracted = {};
