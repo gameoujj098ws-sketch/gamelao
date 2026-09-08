@@ -5,6 +5,7 @@ type Extracted = {
   recipient_name?: string | null;
   amount?: number | null;
   date_iso?: string | null;
+  reference_no?: string | null;
   qr_recipient_name?: string | null;
   qr_amount?: number | null;
   qr_date_iso?: string | null;
@@ -12,9 +13,17 @@ type Extracted = {
 type VerifyResult = { ok: boolean; reason?: string; extracted?: Extracted };
 
 const DEFAULT_NAME = "SOMYONE KHAMKHEUNG";
+/** Honorifics / titles that appear before or after names on Lao & Thai slips. */
+const HONORIFICS = new Set(["MR", "MRS", "MS", "MISS", "MSTR", "DR", "NAI", "NANG", "MR.", "THAO"]);
 
 function normalizeName(s: string | null | undefined) {
   return (s ?? "").toUpperCase().replace(/[^A-Z ]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function nameTokens(s: string | null | undefined) {
+  return normalizeName(s)
+    .split(" ")
+    .filter((t) => t.length > 1 && !HONORIFICS.has(t));
 }
 
 /** Read the admin-configured receiver account name from site settings. */
@@ -35,12 +44,20 @@ async function loadExpectedName(): Promise<string> {
   }
 }
 
+/**
+ * Match the receiver name loosely: honorifics (MR/MRS/…) and any extra
+ * words after the first + last name are ignored. Every meaningful token of
+ * the configured name that is longer than 2 chars must appear on the slip.
+ */
 function makeNameChecker(expected: string) {
-  const tokens = normalizeName(expected).split(" ").filter((t) => t.length > 2);
+  const tokens = nameTokens(expected).filter((t) => t.length > 2);
   return (s: string | null | undefined) => {
-    const n = normalizeName(s);
-    if (!n || tokens.length === 0) return false;
-    return tokens.every((t) => n.includes(t));
+    const slip = nameTokens(s);
+    if (slip.length === 0 || tokens.length === 0) return false;
+    const hit = (t: string) => slip.some((w) => w.includes(t) || t.includes(w));
+    const matched = tokens.filter(hit).length;
+    // allow one unreadable token when the name has 3+ parts
+    return tokens.length >= 3 ? matched >= tokens.length - 1 : matched === tokens.length;
   };
 }
 
