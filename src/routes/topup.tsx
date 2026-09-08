@@ -166,14 +166,30 @@ function TopupPage() {
       const up = await supabase.storage.from("slips").upload(path, slip, { contentType: slip.type || "image/jpeg", upsert: false });
       if (up.error) throw new Error(up.error.message);
 
-      const reason = verdict.reason ?? (verdict.ok ? "ກວດສອບຜ່ານອັດຕະໂນມັດ" : "ບໍ່ສາມາດກວດສອບສະລິບໄດ້");
+      let ok = verdict.ok;
+      let reason = verdict.reason ?? (verdict.ok ? "ກວດສອບຜ່ານອັດຕະໂນມັດ" : "ບໍ່ສາມາດກວດສອບສະລິບໄດ້");
+
+      // reject slips whose reference number was already used before
+      if (ok) {
+        const ref = verdict.extracted?.reference_no ?? null;
+        const { data: fresh, error: refErr } = await supabase.rpc("claim_slip_ref", {
+          _ref: ref ?? "",
+          _amount: finalAmount,
+        });
+        if (refErr) throw new Error(refErr.message);
+        if (fresh === false) {
+          ok = false;
+          reason = `ສະລິບນີ້ຖືກໃຊ້ໄປແລ້ວ (ເລກອ້າງອີງ ${ref ?? "-"})`;
+        }
+      }
+
       const ins = await supabase.from("topups").insert({
         user_id: user.id, amount: finalAmount, slip_url: path, method: "qr",
-        status: verdict.ok ? "approved" : "rejected", note: reason,
+        status: ok ? "approved" : "rejected", note: reason,
       });
       if (ins.error) throw new Error(ins.error.message);
 
-      if (!verdict.ok) {
+      if (!ok) {
         finish();
         statusDialog.error("ສະລິບບໍ່ຖືກຕ້ອງ", reason);
         return;

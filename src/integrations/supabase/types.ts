@@ -501,6 +501,30 @@ export type Database = {
         }
         Relationships: []
       }
+      slip_refs: {
+        Row: {
+          amount: number | null
+          created_at: string
+          id: string
+          ref: string
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          ref: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          ref?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       spin_history: {
         Row: {
           amount: number
@@ -631,6 +655,10 @@ export type Database = {
       admin_user_summary: { Args: { _user_id: string }; Returns: Json }
       approve_card_topup: { Args: { _id: string }; Returns: undefined }
       approve_topup: { Args: { _topup_id: string }; Returns: undefined }
+      claim_slip_ref: {
+        Args: { _amount?: number; _ref: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

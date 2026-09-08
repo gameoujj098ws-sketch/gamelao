@@ -96,6 +96,27 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
   }
+  /* Soft blurred artwork behind the whole app */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -8vh -8vw;
+    z-index: -2;
+    background-image: url("/__l5e/assets-v1/fc80c0c7-3c26-43df-b437-d37790dbc3d3/bg-hero.jpg");
+    background-size: cover;
+    background-position: center top;
+    filter: blur(18px) saturate(1.05);
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(180deg, color-mix(in oklab, white 78%, transparent) 0%, color-mix(in oklab, white 86%, transparent) 55%, color-mix(in oklab, white 80%, transparent) 100%);
+    pointer-events: none;
+  }
 }
 
 @utility glass {
