@@ -17,6 +17,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
+import { Route as ApiPublicLaoQrRouteImport } from './routes/api/public/lao-qr'
 
 const TopupRoute = TopupRouteImport.update({
   id: '/topup',
@@ -58,6 +59,11 @@ const ProductIdRoute = ProductIdRouteImport.update({
   path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicLaoQrRoute = ApiPublicLaoQrRouteImport.update({
+  id: '/api/public/lao-qr',
+  path: '/api/public/lao-qr',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/topup': typeof TopupRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/public/lao-qr': typeof ApiPublicLaoQrRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/topup': typeof TopupRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/public/lao-qr': typeof ApiPublicLaoQrRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/topup': typeof TopupRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/public/lao-qr': typeof ApiPublicLaoQrRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/topup'
     | '/product/$id'
+    | '/api/public/lao-qr'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/topup'
     | '/product/$id'
+    | '/api/public/lao-qr'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/topup'
     | '/product/$id'
+    | '/api/public/lao-qr'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +144,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   TopupRoute: typeof TopupRoute
   ProductIdRoute: typeof ProductIdRoute
+  ApiPublicLaoQrRoute: typeof ApiPublicLaoQrRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/lao-qr': {
+      id: '/api/public/lao-qr'
+      path: '/api/public/lao-qr'
+      fullPath: '/api/public/lao-qr'
+      preLoaderRoute: typeof ApiPublicLaoQrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,6 +224,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   TopupRoute: TopupRoute,
   ProductIdRoute: ProductIdRoute,
+  ApiPublicLaoQrRoute: ApiPublicLaoQrRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
