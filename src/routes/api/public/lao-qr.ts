@@ -91,9 +91,9 @@ export const Route = createFileRoute("/api/public/lao-qr")({
         const { data: settled, error } = await supabaseAdmin.rpc("settle_payment_intent", {
           _id: intent.id,
           _ok: ok,
-          _bank_ref: bankRef,
+          _bank_ref: bankRef ?? "",
           _payload: body as never,
-          _reason: ok ? null : `name=${nameOk} amount=${amountOk} time=${timeOk}`,
+          _reason: ok ? "" : `name=${nameOk} amount=${amountOk} time=${timeOk}`,
         });
         if (error) {
           console.error("[laoqr] settle failed", error);
