@@ -43,8 +43,12 @@ export const Route = createFileRoute("/api/public/lao-qr")({
         const timeoutMin = cfg.timeout_minutes || 15;
         const secret = cfg.webhook_secret || process.env["LAO_QR_WEBHOOK_SECRET"] || null;
 
-        // Verify the caller when a shared secret is configured.
-        if (secret) {
+        // A shared secret is mandatory: without it nobody may settle a transaction.
+        if (!secret) {
+          console.error("[laoqr] webhook secret not configured - rejecting callback");
+          return new Response("webhook not configured", { status: 503 });
+        }
+        {
           const provided = request.headers.get("x-signature") ?? request.headers.get("x-webhook-signature") ?? "";
           const expected = createHmac("sha256", secret).update(raw).digest("hex");
           const a = Buffer.from(provided);
