@@ -736,7 +736,6 @@ export type Database = {
       admin_user_summary: { Args: { _user_id: string }; Returns: Json }
       approve_card_topup: { Args: { _id: string }; Returns: undefined }
       approve_topup: { Args: { _topup_id: string }; Returns: undefined }
-      assert_active_user: { Args: { _uid: string }; Returns: undefined }
       cancel_payment_intent: { Args: { _id: string }; Returns: undefined }
       claim_slip_ref: {
         Args: { _amount?: number; _ref: string }
@@ -744,17 +743,6 @@ export type Database = {
       }
       create_payment_intent: { Args: { _amount: number }; Returns: Json }
       expire_payment_intents: { Args: never; Returns: undefined }
-      finalize_slip_topup: {
-        Args: {
-          _amount: number
-          _note: string
-          _ok: boolean
-          _ref: string
-          _slip_url: string
-          _user_id: string
-        }
-        Returns: Json
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -790,10 +778,6 @@ export type Database = {
       }
       spin_wheel: { Args: never; Returns: Json }
       submit_card_topup: { Args: { _card: string }; Returns: Json }
-      submit_pending_topup: {
-        Args: { _amount: number; _slip_url: string }
-        Returns: Json
-      }
       top_spenders: {
         Args: never
         Returns: {
